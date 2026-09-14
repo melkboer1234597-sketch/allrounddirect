@@ -1,0 +1,5 @@
+# Lokale secrets voor Wrangler (niet committen)
+# Kopieer naar .dev.vars en vul waarden in.
+
+MOLLIE_API_KEY=
+ADMIN_SESSION_SECRET=dev-session-secret-change-me
