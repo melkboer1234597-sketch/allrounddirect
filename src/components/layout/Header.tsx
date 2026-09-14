@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { CircleUserRound, Heart, Menu, ShoppingBag } from 'lucide-react'
 import { TopBar } from '@/components/layout/TopBar'
 import { DesktopNav } from '@/components/layout/DesktopNav'
@@ -18,9 +18,14 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const scrolled = useScrolled(12)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const { pathname } = useLocation()
   const session = useAuthSession()
   const { count } = useCart()
   const accountHref = session.data?.user ? '/account/overzicht' : '/account'
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
 
   function closeMenu() {
     setMenuOpen(false)

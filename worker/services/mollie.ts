@@ -249,11 +249,33 @@ function createMockService(env: AppEnv['Bindings']): PaymentsService {
   }
 }
 
+function mollieMethodsToArray(
+  raw: unknown,
+): Array<{
+  id: string
+  description: string
+  image?: { size1x?: string; size2x?: string; svg?: string }
+}> {
+  if (Array.isArray(raw)) return raw as never
+  if (raw && typeof raw === 'object') {
+    const maybe = raw as { _embedded?: { methods?: unknown }; length?: number }
+    if (Array.isArray(maybe._embedded?.methods)) return maybe._embedded.methods as never
+    try {
+      return Array.from(raw as Iterable<(typeof maybe)>) as never
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 export function createPaymentsService(env: AppEnv['Bindings']): PaymentsService {
   const { mode, apiKey } = assertMollieAllowed(env)
   if (!apiKey) {
     if (isDevelopment(env) && mode === 'test') return createMockService(env)
-    throw new MollieConfigError('MOLLIE_API_KEY ontbreekt.')
+    throw new MollieConfigError(
+      'MOLLIE_API_KEY ontbreekt. Zet een test_ key in .dev.vars voor lokale ontwikkeling.',
+    )
   }
 
   const client = createMollieClient({ apiKey })
@@ -261,28 +283,36 @@ export function createPaymentsService(env: AppEnv['Bindings']): PaymentsService 
     mode,
     isMock: false,
     async listMethods(input) {
-      const list = (await client.methods.list({
-        amount: {
-          currency: input.currency ?? 'EUR',
-          value: centsToMollieValue(Math.max(input.amountCents, 100)),
-        },
-        locale: input.locale as never,
-        billingCountry: input.country,
-      })) as unknown as Array<{
-        id: string
-        description: string
-        image?: { size1x?: string; size2x?: string; svg?: string }
-      }>
-      const methods = (Array.isArray(list) ? list : []).map((method) => ({
-        id: method.id,
-        description: method.description,
-        image: {
-          size1x: method.image?.size1x,
-          size2x: method.image?.size2x,
-          svg: method.image?.svg,
-        },
-      }))
-      return sortPaymentMethods(input.country, methods)
+      try {
+        const raw = await client.methods.list({
+          amount: {
+            currency: input.currency ?? 'EUR',
+            value: centsToMollieValue(Math.max(input.amountCents, 100)),
+          },
+          locale: input.locale as never,
+          billingCountry: input.country,
+        })
+        const list = mollieMethodsToArray(raw)
+        const methods = list.map((method) => ({
+          id: method.id,
+          description: method.description,
+          image: {
+            size1x: method.image?.size1x,
+            size2x: method.image?.size2x,
+            svg: method.image?.svg,
+          },
+        }))
+        return sortPaymentMethods(input.country, methods)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Mollie methods request failed'
+        console.error('[mollie] listMethods failed', {
+          country: input.country,
+          amountCents: input.amountCents,
+          mode,
+          message: message.slice(0, 200),
+        })
+        throw error
+      }
     },
     async createPayment(input) {
       const payload = {

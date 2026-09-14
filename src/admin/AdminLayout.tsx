@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   BarChart3,
   ChevronLeft,
@@ -18,6 +18,7 @@ import { assets } from '@/lib/assets'
 import { cn } from '@/lib/cn'
 import { authClient } from '@/lib/auth-client'
 import { useAdminSession } from '@/admin/RequireStaff'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 const GROUPS = [
   {
@@ -72,6 +73,12 @@ export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { admin } = useAdminSession()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  useBodyScrollLock(mobileOpen)
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   async function logout() {
     await authClient.signOut()

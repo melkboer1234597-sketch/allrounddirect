@@ -43,8 +43,11 @@ export function NotFoundPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Button to="/">Naar homepage</Button>
+            <Button to="/assortiment" variant="secondary">
+              Bekijk assortiment
+            </Button>
           </div>
         </div>
       </Container>

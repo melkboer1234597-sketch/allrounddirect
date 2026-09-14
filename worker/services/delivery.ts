@@ -1,44 +1,55 @@
 /**
  * Shipping resolution — free shipping from official commerce threshold.
- * Below-threshold rates: only when configured; never invent a fake fee.
+ * Production rates come from shippingConfig (env-overridable).
+ * Development-only fallbacks are explicit and never silently used in production.
  */
 import type { CheckoutCountry } from '../../shared/checkout'
 import {
   commerceConfig,
+  deliveryLabelFull,
   qualifiesForFreeShipping,
+  resolveStandardShippingCents,
+  shippingConfig,
+  type ShippingResolutionMode,
 } from '../../shared/commerce'
 
 export type DeliveryMethod = {
   id: string
   label: string
   description: string
-  /** Integer cents when known. null = not configured (honest unknown below threshold). */
+  /** Base rate before free-shipping (null = rate not configured). */
   amountCents: number | null
   countries: CheckoutCountry[]
   kind: 'parcel' | 'large_item' | 'supplier_direct' | 'freight' | 'quote'
 }
 
-export const DELIVERY_METHODS: DeliveryMethod[] = [
-  {
-    id: 'standard_nl_be',
-    label: 'Bezorging op afleveradres',
-    description: `Standaard levering in ${commerceConfig.supportedCountries.join(' en ')}. ${commerceConfig.standardDeliveryMinBusinessDays}-${commerceConfig.standardDeliveryMaxBusinessDays} werkdagen.`,
-    amountCents: null,
-    countries: ['NL', 'BE'],
-    kind: 'supplier_direct',
-  },
-  {
-    id: 'large_item',
-    label: 'Groot artikel / maatwerk levering',
-    description: 'Voor meubels en grote apparatuur. Planning in overleg.',
-    amountCents: null,
-    countries: ['NL', 'BE'],
-    kind: 'large_item',
-  },
-]
+export function buildDeliveryMethods(): DeliveryMethod[] {
+  return [
+    {
+      id: 'standard_nl_be',
+      label: 'Bezorging op adres',
+      description: deliveryLabelFull(),
+      amountCents: null, // resolved per country via shippingConfig
+      countries: ['NL', 'BE'],
+      kind: 'parcel',
+    },
+  ]
+}
 
-export function deliveryMethodsForCountry(country: CheckoutCountry): DeliveryMethod[] {
-  return DELIVERY_METHODS.filter((method) => method.countries.includes(country))
+export function deliveryMethodsForCountry(
+  country: CheckoutCountry,
+  mode: ShippingResolutionMode = 'production',
+): Array<DeliveryMethod & { amountCents: number | null; rateSource: string }> {
+  return buildDeliveryMethods()
+    .filter((method) => method.countries.includes(country))
+    .map((method) => {
+      const resolved = resolveStandardShippingCents(country, mode)
+      return {
+        ...method,
+        amountCents: resolved.cents,
+        rateSource: resolved.source,
+      }
+    })
 }
 
 export function resolveShippingCents(
@@ -49,13 +60,16 @@ export function resolveShippingCents(
    * Used solely for free-shipping threshold — never trust a client-supplied total.
    */
   eligibleMerchandiseSubtotalCents = 0,
+  mode: ShippingResolutionMode = 'production',
 ): {
   method: DeliveryMethod
   shippingCents: number
   priceKnown: boolean
   freeShipping: boolean
+  rateSource: string
+  shippingConfigured: boolean
 } {
-  const methods = deliveryMethodsForCountry(country)
+  const methods = deliveryMethodsForCountry(country, mode)
   const method = methods.find((item) => item.id === methodId) ?? methods[0]
   if (!method) {
     throw new Error('Geen bezorgoptie beschikbaar voor dit land.')
@@ -67,16 +81,42 @@ export function resolveShippingCents(
       shippingCents: 0,
       priceKnown: true,
       freeShipping: true,
+      rateSource: 'free_shipping_threshold',
+      shippingConfigured: true,
     }
   }
 
-  if (method.amountCents == null) {
-    return { method, shippingCents: 0, priceKnown: false, freeShipping: false }
+  const resolved = resolveStandardShippingCents(country, mode)
+  if (resolved.cents == null) {
+    return {
+      method,
+      shippingCents: 0,
+      priceKnown: false,
+      freeShipping: false,
+      rateSource: resolved.source,
+      shippingConfigured: false,
+    }
   }
+
   return {
     method,
-    shippingCents: method.amountCents,
+    shippingCents: resolved.cents,
     priceKnown: true,
     freeShipping: false,
+    rateSource: resolved.source,
+    shippingConfigured: true,
+  }
+}
+
+export function shippingDiagnostics(mode: ShippingResolutionMode) {
+  return {
+    thresholdCents: commerceConfig.freeShippingThresholdCents,
+    productionRates: shippingConfig.standardShippingCents,
+    developmentFallbackCents: shippingConfig.developmentFallbackCents,
+    mode,
+    note:
+      mode === 'development'
+        ? 'Development fallback rates may apply when production rates are unset.'
+        : 'Production never uses development fallback rates.',
   }
 }

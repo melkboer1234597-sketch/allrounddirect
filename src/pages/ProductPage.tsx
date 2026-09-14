@@ -1,6 +1,6 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SITE } from '@/config/site'
 import { SeoHead } from '@/components/seo/SeoHead'
 import { ProductGallery } from '@/components/product/ProductGallery'
@@ -42,12 +42,19 @@ function stockCopy(product: {
 
 export function ProductPage() {
   const { slug = '' } = useParams()
+  const { hash } = useLocation()
   const [added, setAdded] = useState(false)
   const [qty, setQty] = useState(1)
   const [openSection, setOpenSection] = useState<'desc' | 'specs' | 'delivery'>('desc')
   const [sticky, setSticky] = useState(false)
   const [variantSelection, setVariantSelection] = useState<Record<string, string>>({})
   const ctaRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const id = hash.replace(/^#/, '')
+    if (id === 'specificaties') setOpenSection('specs')
+    else if (id === 'bezorgen') setOpenSection('delivery')
+  }, [hash, slug])
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['catalog', 'product', slug],
@@ -347,7 +354,7 @@ export function ProductPage() {
           </div>
         </div>
 
-        <div className="mt-12 max-w-[820px] md:mt-16">
+        <div className="mt-12 max-w-[820px] md:mt-16" id="product-details">
           <div className="flex flex-wrap gap-2 border-b border-line">
             {(
               [
@@ -382,7 +389,8 @@ export function ProductPage() {
               </div>
             ) : null}
             {openSection === 'specs' ? (
-              allSpecs.length ? (
+              <div id="specificaties">
+              {allSpecs.length ? (
                 <table className="w-full text-left text-[14px]">
                   <tbody>
                     {allSpecs.map((spec, index) => (
@@ -395,10 +403,11 @@ export function ProductPage() {
                 </table>
               ) : (
                 <p className="text-[15px] text-muted">Nog geen specificaties beschikbaar.</p>
-              )
+              )}
+              </div>
             ) : null}
             {openSection === 'delivery' ? (
-              <div className="space-y-3 text-[15px] leading-relaxed text-ink/85">
+              <div id="bezorgen" className="space-y-3 text-[15px] leading-relaxed text-ink/85">
                 <p>
                   {deliveryFull}. Wij leveren bestellingen in Nederland en België op het opgegeven
                   afleveradres.

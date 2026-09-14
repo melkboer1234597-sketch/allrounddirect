@@ -7,15 +7,17 @@ import {
   checkoutLocale,
   isCheckoutCountry,
   isValidPostalCode,
+  preferredPaymentMethodId,
 } from '../../shared/checkout'
+import { deliveryLabelShort, freeShippingThresholdLabel } from '../../shared/commerce'
 import { resolveCheckoutCountry } from '../../shared/geo-country'
 import { canRetryPayment, paymentUiState } from '../../shared/payment-ui'
 import { getSession } from '../auth/session'
 import { createDb } from '../db'
 import { addresses, customerProfiles, orders, payments } from '../db/schema'
 import { enforceRateLimit } from '../lib/rate-limit'
-import { getClientIp } from '../lib/request'
-import { deliveryMethodsForCountry } from '../services/delivery'
+import { getClientIp, isDevelopment } from '../lib/request'
+import { deliveryMethodsForCountry, shippingDiagnostics } from '../services/delivery'
 import {
   placePendingOrder,
   quoteCheckout,
@@ -31,6 +33,58 @@ import { syncProviderPayment } from '../services/payment-sync'
 import type { AppEnv } from '../types'
 
 export const checkoutRoutes = new Hono<AppEnv>()
+
+async function loadPaymentMethods(
+  env: AppEnv['Bindings'],
+  input: { amountCents: number; country: (typeof CHECKOUT_COUNTRIES)[number] },
+) {
+  const locale = checkoutLocale(input.country)
+  const mollie = mollieEnvironmentLabel(env)
+  try {
+    const service = createPaymentsService(env)
+    const methods = await service.listMethods({
+      amountCents: Math.max(100, input.amountCents),
+      country: input.country,
+      locale,
+      currency: 'EUR',
+    })
+    return {
+      paymentMethods: methods,
+      paymentMethodsError: null as string | null,
+      preferredPaymentMethodId: preferredPaymentMethodId(input.country, methods),
+      mollie: {
+        ...mollie,
+        isMock: service.isMock,
+      },
+    }
+  } catch (error) {
+    const message =
+      error instanceof MollieConfigError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : 'Betaalmethoden konden niet worden geladen.'
+    console.error('[checkout] payment methods failed', {
+      country: input.country,
+      amountCents: input.amountCents,
+      message: message.slice(0, 200),
+    })
+    return {
+      paymentMethods: [] as Array<{
+        id: string
+        description: string
+        image: { size1x?: string; size2x?: string; svg?: string }
+      }>,
+      paymentMethodsError: message,
+      preferredPaymentMethodId: '',
+      mollie: {
+        ...mollie,
+        isMock: false,
+      },
+    }
+  }
+}
+
 
 const addressSchema = z
   .object({
@@ -91,29 +145,25 @@ const quoteSchema = z.object({
   deliveryMethodId: z.string().optional(),
 })
 
-checkoutRoutes.get('/context', async (c) => {  const cfCountry = (c.req.raw as Request & { cf?: { country?: string } }).cf?.country
+checkoutRoutes.get('/context', async (c) => {
+  const cfCountry = (c.req.raw as Request & { cf?: { country?: string } }).cf?.country
   const resolved = resolveCheckoutCountry(cfCountry, c.req.query('country'))
   const suggestedCountry = resolved.suggested
   const country = resolved.country
   const amountCents = Math.max(100, Number(c.req.query('amountCents') ?? '10000') || 10000)
   const locale = checkoutLocale(country)
-  const mollie = mollieEnvironmentLabel(c.env)
+  const mode = isDevelopment(c.env) ? 'development' : 'production'
+  const deliveryMethods = deliveryMethodsForCountry(country, mode).map((method) => ({
+    id: method.id,
+    label: method.label,
+    description: method.description,
+    amountCents: method.amountCents,
+    priceKnown: method.amountCents != null,
+    rateSource: method.rateSource,
+    deliveryTime: deliveryLabelShort(),
+  }))
 
-  let methods: Array<{
-    id: string
-    description: string
-    image: { size1x?: string; size2x?: string; svg?: string }
-  }> = []
-  try {
-    methods = await createPaymentsService(c.env).listMethods({
-      amountCents,
-      country,
-      locale,
-      currency: 'EUR',
-    })
-  } catch {
-    methods = []
-  }
+  const paymentsResult = await loadPaymentMethods(c.env, { amountCents, country })
 
   const session = await getSession(c)
   let prefill: {
@@ -184,21 +234,48 @@ checkoutRoutes.get('/context', async (c) => {  const cfCountry = (c.req.raw as R
       label: CHECKOUT_COUNTRY_LABELS[code],
     })),
     locale,
-    deliveryMethods: deliveryMethodsForCountry(country).map((method) => ({
-      id: method.id,
-      label: method.label,
-      description: method.description,
-      amountCents: method.amountCents,
-      priceKnown: method.amountCents != null,
-    })),
-    paymentMethods: methods,
-    mollie: {
-      label: mollie.label,
-      mode: mollie.mode,
-      configured: mollie.configured,
-    },
+    deliveryMethods,
+    shipping: shippingDiagnostics(mode),
+    freeShippingLabel: freeShippingThresholdLabel(),
+    paymentMethods: paymentsResult.paymentMethods,
+    paymentMethodsError: paymentsResult.paymentMethodsError,
+    preferredPaymentMethodId: paymentsResult.preferredPaymentMethodId,
+    mollie: paymentsResult.mollie,
     prefill,
     loggedIn: Boolean(session?.user),
+  })
+})
+
+checkoutRoutes.get('/payment-methods', async (c) => {
+  const countryRaw = c.req.query('country') ?? 'NL'
+  if (!isCheckoutCountry(countryRaw)) {
+    return c.json({ error: 'Ongeldig land.' }, 400)
+  }
+  const amountCents = Math.max(100, Number(c.req.query('amountCents') ?? '0') || 0)
+  if (!amountCents) {
+    return c.json({ error: 'Bedrag ontbreekt voor betaalmethoden.' }, 400)
+  }
+  const result = await loadPaymentMethods(c.env, {
+    amountCents,
+    country: countryRaw,
+  })
+  if (result.paymentMethodsError && !result.paymentMethods.length) {
+    return c.json(
+      {
+        error: result.paymentMethodsError,
+        paymentMethods: [],
+        mollie: result.mollie,
+      },
+      502,
+    )
+  }
+  return c.json({
+    country: countryRaw,
+    amountCents,
+    locale: checkoutLocale(countryRaw),
+    paymentMethods: result.paymentMethods,
+    preferredPaymentMethodId: result.preferredPaymentMethodId,
+    mollie: result.mollie,
   })
 })
 

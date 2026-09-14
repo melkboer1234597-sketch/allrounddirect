@@ -22,6 +22,46 @@ export const commerceConfig = {
   supportedCountries: ['NL', 'BE'] as const satisfies readonly CheckoutCountry[],
 } as const
 
+/**
+ * Centralized standard shipping rates (cents).
+ * `null` = not configured for production — do not invent a live rate.
+ * Development fallbacks are separate and must never apply in production.
+ */
+export const shippingConfig = {
+  /** Official / env-backed production rates. Keep null until business confirms. */
+  standardShippingCents: {
+    NL: null as number | null,
+    BE: null as number | null,
+  },
+  /**
+   * DEVELOPMENT ONLY — used solely when ENVIRONMENT !== production
+   * and a production rate is still null. Marked explicitly for audits.
+   */
+  developmentFallbackCents: {
+    NL: 695,
+    BE: 995,
+  } as const,
+} as const
+
+export type ShippingResolutionMode = 'production' | 'development'
+
+export function resolveStandardShippingCents(
+  country: CheckoutCountry,
+  mode: ShippingResolutionMode,
+): { cents: number | null; source: 'configured' | 'development_fallback' | 'unconfigured' } {
+  const configured = shippingConfig.standardShippingCents[country]
+  if (configured != null && Number.isInteger(configured) && configured >= 0) {
+    return { cents: configured, source: 'configured' }
+  }
+  if (mode === 'development') {
+    return {
+      cents: shippingConfig.developmentFallbackCents[country],
+      source: 'development_fallback',
+    }
+  }
+  return { cents: null, source: 'unconfigured' }
+}
+
 export type CommerceConfig = typeof commerceConfig
 
 export function isSupportedShippingCountry(value: string): value is CheckoutCountry {

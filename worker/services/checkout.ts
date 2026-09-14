@@ -16,6 +16,7 @@ import {
 import { mediaPublicPath } from '../../shared/media'
 import { getSiteOrigin, newId } from '../lib/request'
 import { resolveShippingCents } from './delivery'
+import { isDevelopment } from '../lib/request'
 import { createPaymentsService } from './mollie'
 import { nextOrderNumber } from './order-numbers'
 import { emitOrderEvent } from './order-events'
@@ -190,6 +191,7 @@ export async function quoteCheckout(
     input.deliveryMethodId,
     input.country,
     subtotalCents,
+    isDevelopment(env) ? 'development' : 'production',
   )
   const discountCents = 0
   const totalCents = addCents(subtotalCents, delivery.shippingCents, -discountCents)
@@ -202,6 +204,8 @@ export async function quoteCheckout(
     totalCents,
     shippingPriceKnown: delivery.priceKnown,
     freeShipping: delivery.freeShipping,
+    shippingConfigured: delivery.shippingConfigured,
+    rateSource: delivery.rateSource,
     deliveryMethod: {
       id: delivery.method.id,
       label: delivery.method.label,
@@ -276,6 +280,11 @@ export async function placePendingOrder(env: AppEnv['Bindings'], input: PlaceOrd
     country: input.shipping.country,
     deliveryMethodId: input.deliveryMethodId,
   })
+  if (!quote.shippingPriceKnown && !quote.freeShipping && !isDevelopment(env)) {
+    throw new Error(
+      'Verzendtarief is nog niet geconfigureerd. Neem contact op of probeer het later opnieuw.',
+    )
+  }
 
   const now = new Date()
   const orderId = newId()

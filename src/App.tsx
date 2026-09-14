@@ -80,10 +80,13 @@ import {
   AdminUsersPage,
 } from '@/admin/pages/AdminResources'
 import { AdminEmailPreviewPage } from '@/admin/pages/AdminEmailPreviewPage'
+import { ScrollManager } from '@/components/navigation/ScrollManager'
 
 export function App() {
   return (
-    <Routes>
+    <>
+      <ScrollManager />
+      <Routes>
       <Route path="scotdejewish/login" element={<AdminLoginPage />} />
       <Route element={<RequireStaff />}>
         <Route element={<AdminLayout />}>
@@ -183,5 +186,6 @@ export function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
+    </>
   )
 }

@@ -1,3 +1,4 @@
+import { Truck } from 'lucide-react'
 import type { HTMLAttributes, ReactNode } from 'react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -9,11 +10,13 @@ import { apiFetch, ApiError } from '@/lib/api'
 import { clearCart, useCart, type CartLine } from '@/lib/cart'
 import { formatCentsNl } from '@/lib/format-cents'
 import { cn } from '@/lib/cn'
+import { scrollToElement } from '@/lib/scroll'
 import {
   isValidPostalCode,
   normalizePostalCode,
   type CheckoutCountry,
 } from '../../shared/checkout'
+import { deliveryLabelShort, freeShippingThresholdLabel } from '../../shared/commerce'
 
 type AddressForm = {
   firstName: string
@@ -40,13 +43,18 @@ type CheckoutContext = {
     description: string
     amountCents: number | null
     priceKnown: boolean
+    deliveryTime?: string
+    rateSource?: string
   }>
   paymentMethods: Array<{
     id: string
     description: string
     image: { size1x?: string; size2x?: string; svg?: string }
   }>
-  mollie: { label: string; mode: string; configured: boolean }
+  paymentMethodsError?: string | null
+  preferredPaymentMethodId?: string
+  freeShippingLabel?: string
+  mollie: { label: string; mode: string; configured: boolean; isMock?: boolean }
   prefill: {
     email?: string
     firstName?: string
@@ -73,6 +81,8 @@ type QuoteResult = {
   totalCents: number
   shippingPriceKnown: boolean
   freeShipping?: boolean
+  shippingConfigured?: boolean
+  rateSource?: string
   deliveryMethod: { id: string; label: string; description: string }
 }
 
@@ -206,9 +216,12 @@ export function CheckoutPage() {
       )
     }
     if (data.paymentMethods.length) {
+      const preferred = data.preferredPaymentMethodId || data.paymentMethods[0].id
       setPaymentMethod((prev) =>
-        data.paymentMethods.some((m) => m.id === prev) ? prev : data.paymentMethods[0].id,
+        data.paymentMethods.some((m) => m.id === prev) ? prev : preferred,
       )
+    } else {
+      setPaymentMethod('')
     }
   }, [context.data])
 
@@ -275,7 +288,7 @@ export function CheckoutPage() {
     const first = order.find((key) => nextErrors[key])
     if (!first) return
     const el = document.querySelector<HTMLElement>(`[data-field="${first}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    scrollToElement(el, { behavior: 'smooth', extraOffset: 8 })
     const input = el?.querySelector<HTMLElement>('input, select, button, textarea')
     input?.focus()
   }
@@ -345,7 +358,7 @@ export function CheckoutPage() {
         err instanceof ApiError ? err.message : 'Bestelling kon niet worden geplaatst. Probeer het opnieuw.',
       )
       setSubmitting(false)
-      formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      scrollToElement(formTopRef.current, { behavior: 'smooth' })
     }
   }
 
@@ -681,86 +694,174 @@ export function CheckoutPage() {
               </Section>
 
               <Section title="Bezorging">
-                <div className="space-y-2">
-                  {(context.data?.deliveryMethods ?? []).map((method) => (
-                    <label
-                      key={method.id}
-                      className={cn(
-                        'flex cursor-pointer gap-3 rounded-[9px] border px-3.5 py-3 transition-colors',
-                        deliveryMethodId === method.id
-                          ? 'border-brand bg-brand/[0.04]'
-                          : 'border-line bg-white hover:border-navy/25',
-                      )}
+                {context.isLoading ? (
+                  <p className="text-[14px] text-muted">Bezorgopties laden…</p>
+                ) : context.isError ? (
+                  <div className="rounded-[8px] border border-line bg-surface px-3 py-3">
+                    <p className="text-[14px] text-ink">Bezorgopties konden niet worden geladen.</p>
+                    <button
+                      type="button"
+                      className="mt-2 text-[13px] font-medium text-brand hover:underline"
+                      onClick={() => void context.refetch()}
                     >
-                      <input
-                        type="radio"
-                        name="delivery"
-                        className="mt-1"
-                        checked={deliveryMethodId === method.id}
-                        onChange={() => setDeliveryMethodId(method.id)}
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-[15px] font-medium text-ink">{method.label}</span>
-                        <span className="mt-0.5 block text-[13px] leading-snug text-muted">
-                          {method.description}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                      Opnieuw proberen
+                    </button>
+                  </div>
+                ) : !(context.data?.deliveryMethods?.length) ? (
+                  <div className="rounded-[8px] border border-line bg-surface px-3 py-3">
+                    <p className="text-[14px] text-ink">Geen bezorgopties beschikbaar voor dit land.</p>
+                    <button
+                      type="button"
+                      className="mt-2 text-[13px] font-medium text-brand hover:underline"
+                      onClick={() => void context.refetch()}
+                    >
+                      Opnieuw proberen
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(context.data?.deliveryMethods ?? []).map((method) => {
+                      const selected = deliveryMethodId === method.id
+                      const priceLabel = quote.data?.freeShipping
+                        ? 'Gratis'
+                        : quote.data?.shippingPriceKnown
+                          ? formatCentsNl(quote.data.shippingCents)
+                          : method.priceKnown && method.amountCents != null
+                            ? formatCentsNl(method.amountCents)
+                            : 'Wordt berekend'
+                      return (
+                        <label
+                          key={method.id}
+                          className={cn(
+                            'flex cursor-pointer items-start gap-3 rounded-[8px] border px-3 py-2.5 transition-colors',
+                            selected
+                              ? 'border-brand bg-brand/[0.04]'
+                              : 'border-line bg-white hover:border-navy/20',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="delivery"
+                            className="mt-1"
+                            checked={selected}
+                            onChange={() => setDeliveryMethodId(method.id)}
+                          />
+                          <Truck
+                            className="mt-0.5 h-4 w-4 shrink-0 text-muted"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-start justify-between gap-3">
+                              <span className="text-[14px] font-medium text-ink">{method.label}</span>
+                              <span className="shrink-0 text-[14px] font-semibold text-ink">
+                                {priceLabel}
+                              </span>
+                            </span>
+                            <span className="mt-0.5 block text-[13px] text-muted">
+                              {method.deliveryTime || deliveryLabelShort()}
+                            </span>
+                          </span>
+                        </label>
+                      )
+                    })}
+                    <p className="pt-1 text-[12px] text-muted">
+                      {context.data?.freeShippingLabel || freeShippingThresholdLabel()}
+                    </p>
+                  </div>
+                )}
               </Section>
 
-              <Section title="Betalen">
-                <div className="space-y-2" data-field="paymentMethod">
-                  {(context.data?.paymentMethods ?? []).map((method) => {
-                    const selected = paymentMethod === method.id
-                    return (
-                      <label
-                        key={method.id}
-                        className={cn(
-                          'flex min-h-[52px] cursor-pointer items-center gap-3 rounded-[9px] border px-3.5 py-2.5 transition-colors',
-                          selected
-                            ? 'border-brand bg-brand/[0.04]'
-                            : 'border-line bg-white hover:border-navy/25',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="pay"
-                          value={method.id}
-                          checked={selected}
-                          aria-label={method.description || method.id}
-                          onChange={() => {
-                            setPaymentMethod(method.id)
-                            setErrors((e) => ({ ...e, paymentMethod: undefined }))
-                          }}
-                        />
-                        {method.image.svg || method.image.size2x || method.image.size1x ? (
-                          <img
-                            src={method.image.svg || method.image.size2x || method.image.size1x}
-                            alt=""
-                            width={40}
-                            height={28}
-                            className="h-7 w-10 object-contain"
-                          />
-                        ) : (
-                          <span className="flex h-7 w-10 items-center justify-center rounded bg-surface text-[10px] text-muted">
-                            {method.id.slice(0, 3).toUpperCase()}
-                          </span>
-                        )}
-                        <span className="text-[15px] text-ink">{method.description}</span>
-                      </label>
-                    )
-                  })}
-                  {!context.data?.paymentMethods?.length && !context.isLoading ? (
-                    <p className="text-[14px] text-muted">
-                      Er zijn momentieel geen betaalmethoden beschikbaar voor dit land.
+              <Section title="Betaalmethode">
+                {context.isLoading ? (
+                  <p className="text-[14px] text-muted">Betaalmethoden laden…</p>
+                ) : context.isError || context.data?.paymentMethodsError ? (
+                  <div
+                    className="rounded-[8px] border border-line bg-surface px-3 py-3"
+                    data-field="paymentMethod"
+                  >
+                    <p className="text-[14px] text-ink">Betaalmethoden konden niet worden geladen.</p>
+                    {context.data?.paymentMethodsError ? (
+                      <p className="mt-1 text-[12px] text-muted">{context.data.paymentMethodsError}</p>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="mt-2 text-[13px] font-medium text-brand hover:underline"
+                      onClick={() => void context.refetch()}
+                    >
+                      Opnieuw proberen
+                    </button>
+                  </div>
+                ) : !(context.data?.paymentMethods?.length) ? (
+                  <div
+                    className="rounded-[8px] border border-line bg-surface px-3 py-3"
+                    data-field="paymentMethod"
+                  >
+                    <p className="text-[14px] text-ink">
+                      Er zijn momentieel geen betaalmethoden beschikbaar voor dit land of bedrag.
                     </p>
-                  ) : null}
-                  {errors.paymentMethod ? (
-                    <p className="text-[13px] text-red-700">{errors.paymentMethod}</p>
-                  ) : null}
-                </div>
+                    <button
+                      type="button"
+                      className="mt-2 text-[13px] font-medium text-brand hover:underline"
+                      onClick={() => void context.refetch()}
+                    >
+                      Opnieuw proberen
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5" data-field="paymentMethod">
+                    {(context.data?.paymentMethods ?? []).map((method) => {
+                      const selected = paymentMethod === method.id
+                      return (
+                        <label
+                          key={method.id}
+                          className={cn(
+                            'flex min-h-[48px] cursor-pointer items-center gap-3 rounded-[8px] border px-3 py-2 transition-colors',
+                            selected
+                              ? 'border-brand bg-brand/[0.04]'
+                              : 'border-line bg-white hover:border-navy/20',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="pay"
+                            value={method.id}
+                            checked={selected}
+                            aria-label={method.description || method.id}
+                            onChange={() => {
+                              setPaymentMethod(method.id)
+                              setErrors((e) => ({ ...e, paymentMethod: undefined }))
+                            }}
+                          />
+                          {method.image.svg || method.image.size2x || method.image.size1x ? (
+                            <img
+                              src={method.image.svg || method.image.size2x || method.image.size1x}
+                              alt=""
+                              width={40}
+                              height={28}
+                              className="h-7 w-10 object-contain"
+                            />
+                          ) : (
+                            <span className="flex h-7 w-10 items-center justify-center rounded bg-surface text-[10px] text-muted">
+                              {method.id.slice(0, 3).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="text-[14px] text-ink">{method.description}</span>
+                        </label>
+                      )
+                    })}
+                    {context.data?.mollie ? (
+                      <p className="pt-1 text-[11px] text-muted">
+                        Mollie: {context.data.mollie.mode.toUpperCase()}
+                        {context.data.mollie.isMock ? ' · development mock' : ''}
+                        {context.data.mollie.configured ? ' · geconfigureerd' : ' · key ontbreekt'}
+                      </p>
+                    ) : null}
+                    {errors.paymentMethod ? (
+                      <p className="text-[13px] text-red-700">{errors.paymentMethod}</p>
+                    ) : null}
+                  </div>
+                )}
               </Section>
 
               <Section title="Controleren">
@@ -768,9 +869,9 @@ export function CheckoutPage() {
                   <ReviewBlock
                     title="Contact"
                     onEdit={() =>
-                      document.querySelector<HTMLElement>('[data-field="email"]')?.scrollIntoView({
+                      scrollToElement(document.querySelector('[data-field="email"]'), {
                         behavior: 'smooth',
-                        block: 'center',
+                        extraOffset: 8,
                       })
                     }
                   >
@@ -783,9 +884,9 @@ export function CheckoutPage() {
                   <ReviewBlock
                     title="Afleveradres"
                     onEdit={() =>
-                      document.querySelector<HTMLElement>('[data-field="street"]')?.scrollIntoView({
+                      scrollToElement(document.querySelector('[data-field="street"]'), {
                         behavior: 'smooth',
-                        block: 'center',
+                        extraOffset: 8,
                       })
                     }
                   >
@@ -801,9 +902,10 @@ export function CheckoutPage() {
                   <ReviewBlock
                     title="Betaling"
                     onEdit={() =>
-                      document
-                        .querySelector<HTMLElement>('[data-field="paymentMethod"]')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      scrollToElement(document.querySelector('[data-field="paymentMethod"]'), {
+                        behavior: 'smooth',
+                        extraOffset: 8,
+                      })
                     }
                   >
                     <p>{paymentLabel || 'Nog niet gekozen'}</p>

@@ -62,3 +62,13 @@ export function sortPaymentMethods<T extends { id: string }>(
     return av - bv
   })
 }
+
+export function preferredPaymentMethodId(
+  country: CheckoutCountry,
+  methods: Array<{ id: string }>,
+): string {
+  if (!methods.length) return ''
+  if (methods.length === 1) return methods[0].id
+  const sorted = sortPaymentMethods(country, methods)
+  return sorted[0]?.id ?? ''
+}

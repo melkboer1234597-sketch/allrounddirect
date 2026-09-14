@@ -1,8 +1,23 @@
 # Local Worker overrides (never commit real secrets)
+# Copy to `.dev.vars` and fill values. Wrangler loads this automatically for `wrangler dev`.
+
 ENVIRONMENT=development
 BETTER_AUTH_URL=http://localhost:5173
 SITE_URL=http://localhost:5173
 PUBLIC_SITE_URL=http://localhost:5173
+
+# Required for REAL Mollie test methods locally (prefix must be test_)
+# Without this key, local checkout uses the development Mollie mock when ENVIRONMENT=development.
+MOLLIE_API_KEY=
 MOLLIE_MODE=test
 MOLLIE_ALLOW_LIVE=false
 MOLLIE_BLOCK_LIVE_REFUNDS=true
+
+# Better Auth (min 32 chars)
+BETTER_AUTH_SECRET=local-dev-secret-change-me-32chars
+
+# Optional locally
+TURNSTILE_SECRET=
+RESEND_API_KEY=
+EMAIL_FROM=AllRound Direct <noreply@localhost>
+EMAIL_REPLY_TO=

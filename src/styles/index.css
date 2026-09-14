@@ -28,17 +28,20 @@
   --space-section: 40px;
   --radius-control: 4px;
   --radius-media: 12px;
+  /* Sticky topbar + header (+ mobile search). Used by scroll helpers + scroll-margin. */
+  --app-header-offset: 140px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --app-header-offset: 112px;
+    --space-section: 72px;
+  }
 }
 
 @media (min-width: 768px) {
   :root {
     --space-section: 64px;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --space-section: 72px;
   }
 }
 
@@ -56,6 +59,7 @@
 
 html {
   overflow-x: clip;
+  /* Do not set global smooth scroll — route restoration stays instant. */
 }
 
 body {
@@ -63,6 +67,24 @@ body {
   min-height: 100vh;
   background: #ffffff;
   overflow-x: clip;
+}
+
+#main:focus {
+  outline: none;
+}
+
+#main:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 4px;
+}
+
+.scroll-mt-header,
+#main,
+[id='specificaties'],
+[id='bezorgen'],
+[id='reviews'],
+[id='catalog-results'] {
+  scroll-margin-top: var(--app-header-offset);
 }
 
 #root {

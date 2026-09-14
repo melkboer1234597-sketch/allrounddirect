@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { ProductImage } from '@/types/catalog'
 
 type ProductGalleryProps = {
@@ -22,6 +23,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     [images.length],
   )
 
+  useBodyScrollLock(lightbox)
+
   useEffect(() => {
     if (!lightbox) return
     function onKey(event: KeyboardEvent) {
@@ -30,11 +33,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       if (event.key === 'ArrowRight') go(index + 1)
     }
     document.addEventListener('keydown', onKey)
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
     }
   }, [lightbox, go, index])
 

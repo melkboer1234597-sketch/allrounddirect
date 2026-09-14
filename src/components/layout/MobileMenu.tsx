@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,17 +38,10 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
     if (drill) setDrill(null)
     else onClose()
   })
+  useBodyScrollLock(open)
 
   useEffect(() => {
-    if (!open) {
-      setDrill(null)
-      return
-    }
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
+    if (!open) setDrill(null)
   }, [open])
 
   return (

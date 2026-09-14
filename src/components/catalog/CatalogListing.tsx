@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal } from 'lucide-react'
 import { ActiveFilters } from '@/components/catalog/ActiveFilters'
 import { CatalogEmpty, CatalogError, CatalogLoading } from '@/components/catalog/CatalogStates'
@@ -19,6 +19,8 @@ import {
 import type { CatalogQuery } from '@/types/catalog'
 import { cn } from '@/lib/cn'
 import { useFocusTrap } from '@/lib/a11y'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { scrollToElement } from '@/lib/scroll'
 
 type CatalogListingProps = {
   categorySlug?: string
@@ -42,11 +44,28 @@ export function CatalogListing({
   emptyDescription,
 }: CatalogListingProps) {
   const [params, setParams] = useSearchParams()
+  const { pathname: routePathname } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [draft, setDraft] = useState<CatalogQuery | null>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const searchKeyRef = useRef(params.toString())
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
   useFocusTrap(drawerOpen, drawerRef, closeDrawer)
+  useBodyScrollLock(drawerOpen)
+
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [routePathname])
+
+  useEffect(() => {
+    const next = params.toString()
+    if (searchKeyRef.current === next) return
+    searchKeyRef.current = next
+    requestAnimationFrame(() => {
+      scrollToElement(resultsRef.current, { behavior: 'auto' })
+    })
+  }, [params])
 
   const parsed = useMemo(() => parseCatalogSearchParams(params), [params])
   const query: CatalogQuery = useMemo(
@@ -99,6 +118,7 @@ export function CatalogListing({
       </aside>
 
       <div>
+        <div id="catalog-results" ref={resultsRef} className="scroll-mt-header">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -155,6 +175,7 @@ export function CatalogListing({
             />
           </>
         ) : null}
+        </div>
       </div>
 
       {drawerOpen ? (

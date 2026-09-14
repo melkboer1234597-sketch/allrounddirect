@@ -3,6 +3,7 @@ import { COOKIE_CATEGORY_COPY, type CookieCategory } from '@/config/legal'
 import { Button } from '@/components/ui/Button'
 import type { ConsentCategories } from '@/lib/consent'
 import { useFocusTrap } from '@/lib/a11y'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 const OPTIONAL: CookieCategory[] = ['preferences', 'analytics', 'marketing']
 
@@ -56,6 +57,7 @@ export function ConsentPreferences({
   const panelRef = useRef<HTMLDivElement>(null)
   const [draft, setDraft] = useState<ConsentCategories>(initial)
   useFocusTrap(true, panelRef, onClose)
+  useBodyScrollLock(true)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-navy/40 p-0 sm:items-center sm:p-4">
