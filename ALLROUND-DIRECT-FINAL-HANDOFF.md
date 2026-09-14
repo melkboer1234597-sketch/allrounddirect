@@ -265,3 +265,7 @@ The ecommerce platform (catalog, cart, checkout, Mollie architecture, accounts, 
 - Dutch normalization applied (idempotent pipeline)
 
 Git push completed status is recorded by the final operator response after push.
+
+**Local commit created:** `1d1ea0d` on `main`  
+**Push attempt:** failed with GitHub 403 (`Permission denied to fxmusa79-web` for `melkboer1234597-sketch/allrounddirect`). Owner must push with an account that has write access:
+`git push origin main`
