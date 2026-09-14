@@ -100,7 +100,7 @@ export function Footer() {
         <Container className="flex flex-col gap-3 py-4 text-[12px] text-white/55 md:flex-row md:items-center md:justify-between md:py-5 md:text-[13px]">
           <p>© {year} AllRound Direct. Alle rechten voorbehouden.</p>
           <ul className="flex flex-wrap gap-x-4 gap-y-2">
-            {FOOTER_LEGAL.map((item) => (
+            {FOOTER_LEGAL.filter((item) => item.href !== '/over-ons').map((item) => (
               <li key={item.href}>
                 <Link to={item.href} className="hover:text-white">
                   {item.label}
