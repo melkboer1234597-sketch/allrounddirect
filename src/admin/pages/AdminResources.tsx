@@ -5,6 +5,7 @@ import { SeoHead } from '@/components/seo/SeoHead'
 import { TextField } from '@/components/account/Fields'
 import { Button } from '@/components/ui/Button'
 import { adminFetch, formatCents } from '@/lib/admin-api'
+import { ApiError } from '@/lib/api'
 import { ORDER_STATUS_LABELS, type OrderStatus } from '../../../shared/order-status'
 
 function Head({ title, path }: { title: string; path: string }) {
@@ -91,6 +92,16 @@ export function AdminOrderDetailPage() {
     queryFn: () => adminFetch<Record<string, unknown>>(`/orders/${id}`),
     enabled: Boolean(id),
   })
+  const [refundMode, setRefundMode] = useState<'full' | 'partial'>('full')
+  const [partialEuros, setPartialEuros] = useState('')
+  const [refundReason, setRefundReason] = useState('')
+  const [confirmChecked, setConfirmChecked] = useState(false)
+  const [confirmStep, setConfirmStep] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState('')
+  const [refundBusy, setRefundBusy] = useState(false)
+  const [refundError, setRefundError] = useState('')
+  const [refundOk, setRefundOk] = useState('')
+
   const order = data?.order as
     | {
         id: string
@@ -98,14 +109,150 @@ export function AdminOrderDetailPage() {
         status: string
         statusLabel: string
         paymentStatus: string
+        paymentMethod?: string | null
         molliePaymentId: string | null
         guestEmail: string
+        guestPhone?: string | null
+        userId?: string | null
+        shippingCountry?: string
         billing: Record<string, string>
         shipping: Record<string, string>
         totalCents: number
+        subtotalCents?: number
+        shippingCents?: number
+        vatCents?: number
+        placedAt?: string
+        paidAt?: string | null
+      }
+    | undefined
+  const items = (data?.items as Array<{
+    name: string
+    quantity: number
+    unitPriceCents: number
+    lineTotalCents: number
+    sku?: string | null
+  }>) ?? []
+  const history = (data?.history as Array<{ toStatus: string; note?: string | null; createdAt: string; source?: string }>) ?? []
+  const timeline = (data?.timeline as Array<{ id: string; label: string; at?: string | null }>) ?? []
+  const shipments = (data?.shipments as Array<{
+    id: string
+    label?: string
+    publicLabel?: string
+    status: string
+    carrier?: string | null
+    trackingCode?: string | null
+    supplierCode?: string | null
+    supplierPublicName?: string | null
+  }>) ?? []
+  const paymentRows = (data?.payments as Array<{
+    id: string
+    providerPaymentId: string
+    status: string
+    method?: string | null
+    amountCents: number
+    currency: string
+    mode?: string
+    paidAt?: string | null
+    createdAt: string
+  }>) ?? []
+  const emailEvents = (data?.emailEvents as Array<{
+    id: string
+    template: string
+    recipient: string
+    status: string
+    providerMessageId?: string | null
+    errorCode?: string | null
+    createdAt: string
+  }>) ?? []
+  const refundRows = (data?.refunds as Array<{
+    id: string
+    amountCents: number
+    status: string
+    reason?: string | null
+    providerRefundId?: string | null
+    createdAt: string
+  }>) ?? []
+  const refundContext = data?.refundContext as
+    | {
+        paidAmountCents: number
+        refundedCents: number
+        remainingCents: number
+        refundable: boolean
+        customerEmail: string
+        orderNumber: string
+        mollieMode: string
+        paymentMode: string | null
+        previousRefunds: Array<{
+          id: string
+          amountCents: number
+          status: string
+          reason: string | null
+        }>
       }
     | undefined
   const transitions = (data?.allowedTransitions as OrderStatus[]) ?? []
+
+  function euro(cents: number) {
+    return (cents / 100).toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' })
+  }
+
+  function addressLines(addr: Record<string, string>) {
+    const street = [addr.street, addr.houseNumber, addr.houseAddition].filter(Boolean).join(' ')
+    return [addr.name, addr.company, street, `${addr.postalCode ?? ''} ${addr.city ?? ''}`.trim(), addr.country]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  function plannedRefundCents() {
+    if (!refundContext) return 0
+    if (refundMode === 'full') return refundContext.remainingCents
+    const euros = Number(partialEuros.replace(',', '.'))
+    if (!Number.isFinite(euros) || euros <= 0) return 0
+    return Math.round(euros * 100)
+  }
+
+  async function executeRefund() {
+    if (!order || !refundContext || !confirmChecked || !idempotencyKey) return
+    const amountCents = plannedRefundCents()
+    if (refundMode === 'partial' && (amountCents <= 0 || amountCents > refundContext.remainingCents)) {
+      setRefundError('Ongeldig deelbedrag.')
+      return
+    }
+    setRefundBusy(true)
+    setRefundError('')
+    setRefundOk('')
+    try {
+      const result = await adminFetch<{
+        id: string
+        status: string
+        amountCents: number
+        reused?: boolean
+      }>(`/orders/${order.id}/refunds`, {
+        method: 'POST',
+        body: JSON.stringify({
+          mode: refundMode,
+          amountCents: refundMode === 'partial' ? amountCents : undefined,
+          reason: refundReason.trim() || undefined,
+          idempotencyKey,
+          confirmed: true,
+        }),
+      })
+      setRefundOk(
+        result.reused
+          ? `Reeds verwerkt (${euro(result.amountCents)}).`
+          : `Terugbetaling uitgevoerd: ${euro(result.amountCents)}.`,
+      )
+      setConfirmStep(false)
+      setConfirmChecked(false)
+      setPartialEuros('')
+      setRefundReason('')
+      await client.invalidateQueries({ queryKey: ['admin', 'order', id] })
+    } catch (err) {
+      setRefundError(err instanceof ApiError ? err.message : 'Terugbetaling mislukt.')
+    } finally {
+      setRefundBusy(false)
+    }
+  }
 
   return (
     <>
@@ -113,12 +260,361 @@ export function AdminOrderDetailPage() {
       {!order ? (
         <p>Laden of niet gevonden.</p>
       ) : (
-        <div className="space-y-4">
-          <h1 className="font-heading text-[24px] font-semibold text-navy">{order.orderNumber}</h1>
-          <p className="text-[14px]">
-            {order.guestEmail} · {order.statusLabel} · betaling {order.paymentStatus}
-            {order.molliePaymentId ? ` · Mollie ${order.molliePaymentId}` : ''}
-          </p>
+        <div className="space-y-6">
+          <div>
+            <h1 className="font-heading text-[24px] font-semibold text-navy">{order.orderNumber}</h1>
+            <p className="mt-2 text-[14px]">
+              {order.statusLabel} · betaling {order.paymentStatus}
+              {order.paymentMethod ? ` · ${order.paymentMethod}` : ''}
+              {order.shippingCountry ? ` · land ${order.shippingCountry}` : ''}
+            </p>
+            <p className="mt-2 text-[16px] font-semibold">{euro(order.totalCents)}</p>
+          </div>
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">Klant</h2>
+            <dl className="mt-2 space-y-1 text-[14px]">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">E-mail</dt>
+                <dd>{order.guestEmail}</dd>
+              </div>
+              {order.guestPhone ? (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted">Telefoon</dt>
+                  <dd>{order.guestPhone}</dd>
+                </div>
+              ) : null}
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Account</dt>
+                <dd>{order.userId ? order.userId : 'Gast'}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">Betaling / Mollie</h2>
+            <dl className="mt-2 space-y-1 text-[14px]">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Order payment status</dt>
+                <dd>{order.paymentStatus}</dd>
+              </div>
+              {order.molliePaymentId ? (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted">Mollie payment ID</dt>
+                  <dd className="break-all font-mono text-[12px]">{order.molliePaymentId}</dd>
+                </div>
+              ) : null}
+            </dl>
+            {paymentRows.length ? (
+              <ul className="mt-3 space-y-2 border-t border-line pt-3 text-[13px]">
+                {paymentRows.map((payment) => (
+                  <li key={payment.id} className="rounded-[6px] bg-surface px-3 py-2">
+                    <p className="font-medium">
+                      {payment.status} · {euro(payment.amountCents)}
+                      {payment.method ? ` · ${payment.method}` : ''}
+                      {payment.mode ? ` · ${payment.mode}` : ''}
+                    </p>
+                    <p className="mt-0.5 break-all font-mono text-[11px] text-muted">
+                      {payment.providerPaymentId}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-[13px] text-muted">Geen payment-records.</p>
+            )}
+          </section>
+
+          {items.length ? (
+            <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+              <h2 className="font-heading text-[16px] font-semibold text-navy">Regels</h2>
+              <ul className="mt-2 space-y-1 text-[14px]">
+                {items.map((item, index) => (
+                  <li key={`${item.name}-${index}`} className="flex justify-between gap-4">
+                    <span>
+                      {item.name} × {item.quantity}
+                      {item.sku ? ` · ${item.sku}` : ''}
+                    </span>
+                    <span>{euro(item.lineTotalCents)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">Zendingen</h2>
+            {shipments.length === 0 ? (
+              <p className="mt-2 text-[13px] text-muted">Nog geen zendingen.</p>
+            ) : (
+              <ul className="mt-2 space-y-2 text-[14px]">
+                {shipments.map((shipment, index) => (
+                  <li key={shipment.id} className="rounded-[6px] border border-line px-3 py-2">
+                    <p className="font-medium">
+                      {shipment.label || shipment.publicLabel || `Zending ${index + 1}`} · {shipment.status}
+                    </p>
+                    <p className="text-[13px] text-muted">
+                      {[shipment.carrier, shipment.trackingCode, shipment.supplierCode, shipment.supplierPublicName]
+                        .filter(Boolean)
+                        .join(' · ') || 'Geen tracking'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+              <h2 className="font-heading text-[16px] font-semibold text-navy">Afleveradres</h2>
+              <p className="mt-2 whitespace-pre-line text-[13px] text-ink">
+                {addressLines(order.shipping)}
+              </p>
+            </section>
+            <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+              <h2 className="font-heading text-[16px] font-semibold text-navy">Factuuradres</h2>
+              <p className="mt-2 whitespace-pre-line text-[13px] text-ink">
+                {addressLines(order.billing)}
+              </p>
+            </section>
+          </div>
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">Tijdlijn</h2>
+            {timeline.length ? (
+              <ol className="mt-2 space-y-1 text-[13px]">
+                {timeline.map((step) => (
+                  <li key={step.id}>
+                    {step.label}
+                    {step.at ? ` — ${new Date(step.at).toLocaleString('nl-NL')}` : ''}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+            {history.length ? (
+              <ul className="mt-3 space-y-1 border-t border-line pt-3 text-[12px] text-muted">
+                {history.map((entry, index) => (
+                  <li key={`${entry.toStatus}-${index}`}>
+                    {entry.toStatus}
+                    {entry.source ? ` (${entry.source})` : ''}
+                    {entry.note ? ` — ${entry.note}` : ''}
+                    {entry.createdAt ? ` · ${new Date(entry.createdAt).toLocaleString('nl-NL')}` : ''}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">E-mail events</h2>
+            {emailEvents.length === 0 ? (
+              <p className="mt-2 text-[13px] text-muted">Geen e-mail events.</p>
+            ) : (
+              <ul className="mt-2 space-y-2 text-[13px]">
+                {emailEvents.map((event) => (
+                  <li key={event.id} className="rounded-[6px] bg-surface px-3 py-2">
+                    <p className="font-medium">
+                      {event.template} · {event.status}
+                    </p>
+                    <p className="text-muted">
+                      {event.recipient}
+                      {event.createdAt ? ` · ${new Date(event.createdAt).toLocaleString('nl-NL')}` : ''}
+                    </p>
+                    {event.errorCode ? (
+                      <p className="text-red-700">Fout: {event.errorCode}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
+            <h2 className="font-heading text-[16px] font-semibold text-navy">Terugbetalingen</h2>
+            {refundContext ? (
+              <dl className="mt-2 space-y-1 text-[14px]">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted">Betaald</dt>
+                  <dd>{euro(refundContext.paidAmountCents)}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted">Reeds terugbetaald</dt>
+                  <dd>{euro(refundContext.refundedCents)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 font-semibold">
+                  <dt>Nog terugbetaalbaar</dt>
+                  <dd>{euro(refundContext.remainingCents)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 text-[13px] text-muted">
+                  <dt>Mollie-modus</dt>
+                  <dd>
+                    {refundContext.mollieMode}
+                    {refundContext.paymentMode ? ` · payment ${refundContext.paymentMode}` : ''}
+                  </dd>
+                </div>
+              </dl>
+            ) : null}
+
+            {refundRows.length === 0 ? (
+              <p className="mt-3 text-[13px] text-muted">Geen eerdere refunds.</p>
+            ) : (
+              <ul className="mt-3 space-y-1 border-t border-line pt-3 text-[14px]">
+                {refundRows.map((refund) => (
+                  <li key={refund.id}>
+                    {euro(refund.amountCents)} · {refund.status}
+                    {refund.reason ? ` — ${refund.reason}` : ''}
+                    {refund.providerRefundId ? (
+                      <span className="ml-1 font-mono text-[11px] text-muted">
+                        {refund.providerRefundId}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {refundContext?.refundable ? (
+              <div className="mt-4 border-t border-line pt-4">
+                {!confirmStep ? (
+                  <div className="space-y-3">
+                    <p className="text-[13px] text-muted">
+                      Kies volledige of gedeeltelijke terugbetaling. Het bedrag wordt server-side
+                      gevalideerd.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={refundMode === 'full' ? 'primary' : 'secondary'}
+                        onClick={() => setRefundMode('full')}
+                      >
+                        Volledige terugbetaling
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={refundMode === 'partial' ? 'primary' : 'secondary'}
+                        onClick={() => setRefundMode('partial')}
+                      >
+                        Gedeeltelijke terugbetaling
+                      </Button>
+                    </div>
+                    {refundMode === 'partial' ? (
+                      <TextField
+                        label="Bedrag (EUR)"
+                        value={partialEuros}
+                        onChange={(event) => setPartialEuros(event.target.value)}
+                        placeholder="bijv. 12,50"
+                      />
+                    ) : null}
+                    <TextField
+                      label="Reden (optioneel)"
+                      value={refundReason}
+                      onChange={(event) => setRefundReason(event.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setRefundError('')
+                        setRefundOk('')
+                        setConfirmChecked(false)
+                        setIdempotencyKey(crypto.randomUUID())
+                        setConfirmStep(true)
+                      }}
+                    >
+                      Naar bevestiging…
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 rounded-[8px] border-2 border-red-200 bg-red-50/60 p-4">
+                    <p className="font-heading text-[16px] font-semibold text-navy">
+                      Bevestig terugbetaling
+                    </p>
+                    <dl className="space-y-1 text-[14px]">
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-muted">Order</dt>
+                        <dd>{refundContext.orderNumber}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-muted">Klant</dt>
+                        <dd>{refundContext.customerEmail}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-muted">Betaald bedrag</dt>
+                        <dd>{euro(refundContext.paidAmountCents)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-muted">Eerdere refunds</dt>
+                        <dd>{euro(refundContext.refundedCents)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4 font-semibold text-red-800">
+                        <dt>Dit terugbetalingsbedrag</dt>
+                        <dd>{euro(plannedRefundCents())}</dd>
+                      </div>
+                    </dl>
+                    {refundContext.previousRefunds.length ? (
+                      <ul className="text-[12px] text-muted">
+                        {refundContext.previousRefunds.map((row) => (
+                          <li key={row.id}>
+                            {euro(row.amountCents)} · {row.status}
+                            {row.reason ? ` — ${row.reason}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <label className="flex items-start gap-2 text-[14px]">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={confirmChecked}
+                        onChange={(event) => setConfirmChecked(event.target.checked)}
+                      />
+                      <span>
+                        Ik bevestig dat ik {euro(plannedRefundCents())} wil terugbetalen voor{' '}
+                        {refundContext.orderNumber}. Dit kan niet ongedaan worden gemaakt via deze
+                        knop.
+                      </span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        disabled={!confirmChecked || refundBusy || plannedRefundCents() <= 0}
+                        onClick={() => void executeRefund()}
+                      >
+                        {refundBusy ? 'Bezig…' : 'Terugbetaling uitvoeren'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={refundBusy}
+                        onClick={() => {
+                          setConfirmStep(false)
+                          setConfirmChecked(false)
+                        }}
+                      >
+                        Annuleren
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {refundError ? (
+                  <p className="mt-3 text-[14px] text-red-700" role="alert">
+                    {refundError}
+                  </p>
+                ) : null}
+                {refundOk ? (
+                  <p className="mt-3 text-[14px] text-green-800" role="status">
+                    {refundOk}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-3 text-[13px] text-muted">
+                Geen terugbetaling mogelijk (niet betaald, geen restbedrag, of ongeldige
+                orderstatus).
+              </p>
+            )}
+          </section>
+
           <div className="flex flex-wrap gap-2">
             {transitions.map((status) => (
               <Button

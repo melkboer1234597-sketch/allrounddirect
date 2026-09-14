@@ -5,6 +5,7 @@ import { SeoHead } from '@/components/seo/SeoHead'
 import { TextField } from '@/components/account/Fields'
 import { Button } from '@/components/ui/Button'
 import { adminFetch, adminUpload, formatCents } from '@/lib/admin-api'
+import { deliveryLabelFull, deliveryLabelShort } from '../../../shared/commerce'
 
 const TABS = [
   'Algemeen',
@@ -44,6 +45,7 @@ type ProductPayload = {
     leadTimeMaxDays: number | null
     deliveryType: string | null
     isOutlet: boolean
+    isFeatured?: boolean
     isBusinessOnly: boolean
     specificationsJson: string | null
     seoTitle: string | null
@@ -65,6 +67,7 @@ type ProductPayload = {
     alt: string | null
     isPrimary?: boolean
     sortOrder?: number
+    imageStatus?: string | null
   }>
   variants: Array<{ id: string; name: string; sku: string | null; priceInclCents: number | null }>
 }
@@ -94,6 +97,7 @@ export function AdminProductEditorPage() {
     leadTimeMaxDays: '',
     deliveryType: '',
     isOutlet: false,
+    isFeatured: false,
     isBusinessOnly: false,
     specificationsJson: '{}',
     seoTitle: '',
@@ -138,6 +142,7 @@ export function AdminProductEditorPage() {
       leadTimeMaxDays: product.leadTimeMaxDays != null ? String(product.leadTimeMaxDays) : '',
       deliveryType: product.deliveryType ?? '',
       isOutlet: product.isOutlet,
+      isFeatured: Boolean(product.isFeatured),
       isBusinessOnly: product.isBusinessOnly,
       specificationsJson: product.specificationsJson ?? '{}',
       seoTitle: product.seoTitle ?? '',
@@ -177,6 +182,7 @@ export function AdminProductEditorPage() {
     leadTimeMaxDays: form.leadTimeMaxDays ? Number(form.leadTimeMaxDays) : null,
     deliveryType: form.deliveryType || null,
     isOutlet: form.isOutlet,
+    isFeatured: form.isFeatured,
     isBusinessOnly: form.isBusinessOnly,
     specificationsJson: form.specificationsJson || null,
     seoTitle: form.seoTitle || null,
@@ -339,7 +345,13 @@ export function AdminProductEditorPage() {
                   {(detail.data?.images ?? []).map((image, index) => (
                     <li key={image.id} className="flex items-center gap-3">
                       <img src={image.url} alt="" className="h-12 w-12 object-cover" />
-                      <span className="text-[12px] text-muted">#{index + 1}</span>
+                      <span className="text-[12px] text-muted">
+                        #{index + 1}
+                        {image.isPrimary ? ' primair' : ''}
+                        {image.imageStatus && image.imageStatus !== 'ok'
+                          ? ` · ${image.imageStatus}`
+                          : ''}
+                      </span>
                       <button
                         type="button"
                         className="text-brand"
@@ -351,6 +363,7 @@ export function AdminProductEditorPage() {
                                 id: item.id,
                                 sortOrder: itemIndex,
                                 isPrimary: item.id === image.id,
+                                imageStatus: 'ok',
                               })),
                             }),
                           }).then(() =>
@@ -359,6 +372,48 @@ export function AdminProductEditorPage() {
                         }
                       >
                         Primair
+                      </button>
+                      <button
+                        type="button"
+                        className="text-brand"
+                        onClick={() =>
+                          adminFetch(`/products/${id}/images`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                              items: (detail.data?.images ?? []).map((item, itemIndex) => ({
+                                id: item.id,
+                                sortOrder: itemIndex,
+                                isPrimary: item.isPrimary,
+                                imageStatus: item.id === image.id ? 'excluded' : item.imageStatus,
+                              })),
+                            }),
+                          }).then(() =>
+                            client.invalidateQueries({ queryKey: ['admin', 'product', id] }),
+                          )
+                        }
+                      >
+                        Uitsluiten
+                      </button>
+                      <button
+                        type="button"
+                        className="text-brand"
+                        onClick={() =>
+                          adminFetch(`/products/${id}/images`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                              items: (detail.data?.images ?? []).map((item, itemIndex) => ({
+                                id: item.id,
+                                sortOrder: itemIndex,
+                                isPrimary: item.isPrimary,
+                                imageStatus: item.id === image.id ? 'ok' : item.imageStatus,
+                              })),
+                            }),
+                          }).then(() =>
+                            client.invalidateQueries({ queryKey: ['admin', 'product', id] }),
+                          )
+                        }
+                      >
+                        Goedkeuren beeld
                       </button>
                       <button
                         type="button"
@@ -422,14 +477,23 @@ export function AdminProductEditorPage() {
               value={form.stockQuantity}
               onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })}
             />
+            <div className="rounded-[8px] bg-surface px-4 py-3 text-[13px] text-ink">
+              <p className="font-medium">Effectief op de webshop</p>
+              <p className="mt-1 text-muted">
+                Standaard levering: {deliveryLabelShort()} ({deliveryLabelFull()}).
+                Productvelden hieronder zijn bron-/auditmetadata en overrulen de
+                storefront-policy niet, tenzij later een expliciete override wordt
+                geactiveerd.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <TextField
-                label="Levertijd min (dagen)"
+                label="Bron levertijd min (dagen)"
                 value={form.leadTimeMinDays}
                 onChange={(e) => setForm({ ...form, leadTimeMinDays: e.target.value })}
               />
               <TextField
-                label="Levertijd max (dagen)"
+                label="Bron levertijd max (dagen)"
                 value={form.leadTimeMaxDays}
                 onChange={(e) => setForm({ ...form, leadTimeMaxDays: e.target.value })}
               />
@@ -590,6 +654,14 @@ export function AdminProductEditorPage() {
                 onChange={(e) => setForm({ ...form, isOutlet: e.target.checked })}
               />
               Outlet
+            </label>
+            <label className="flex gap-2 text-[14px]">
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+              />
+              Uitgelicht op homepage
             </label>
             <label className="flex gap-2 text-[14px]">
               <input

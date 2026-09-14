@@ -5,7 +5,15 @@ import { addWishlistItem, getWishlist, removeWishlistItem } from '@/lib/account-
 import { readGuestWishlist, toggleGuestWishlist } from '@/lib/guest-wishlist'
 import { cn } from '@/lib/cn'
 
-export function WishlistButton({ slug, name }: { slug: string; name: string }) {
+export function WishlistButton({
+  slug,
+  name,
+  className,
+}: {
+  slug: string
+  name: string
+  className?: string
+}) {
   const session = useAuthSession()
   const client = useQueryClient()
   const loggedIn = Boolean(session.data?.user)
@@ -43,10 +51,13 @@ export function WishlistButton({ slug, name }: { slug: string; name: string }) {
       }}
       aria-pressed={active}
       aria-label={active ? `${name} uit favorieten halen` : `${name} opslaan in favorieten`}
-      className="absolute top-2 right-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-[4px] bg-white/95 text-ink ring-1 ring-line hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      className={cn(
+        'absolute top-2 right-2 z-10 inline-flex h-10 w-10 items-center justify-center rounded-[4px] bg-white/95 text-ink ring-1 ring-line/80 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+        className,
+      )}
     >
       <Heart
-        className={cn('h-[18px] w-[18px]', active && 'fill-brand text-brand')}
+        className={cn('h-5 w-5', active && 'fill-brand text-brand')}
         strokeWidth={1.75}
       />
     </button>

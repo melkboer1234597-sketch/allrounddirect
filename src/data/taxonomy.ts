@@ -49,7 +49,7 @@ export const CATALOG_TAXONOMY: TaxonomyRoot[] = [
       'Meubels voor woonkamer, eetkamer en slaapkamer bij AllRound Direct. Banken, tafels, stoelen en kasten, geleverd op het afleveradres.',
     content: {
       heading: 'Meubels bestellen zonder showroombezoek',
-      body: 'AllRound Direct levert meubels op het afleveradres. Levertijd en formaat verschillen per product en leverancier. Meet de ruimte en de aanvoerroute (deuren, trap, lift) voordat u bestelt. Grote banken en kasten komen vaak in delen. Montage van meubels is niet standaard inbegrepen.',
+      body: 'AllRound Direct levert meubels op het afleveradres in Nederland en België, standaard binnen 1 tot 3 werkdagen. Formaat en aanvoerroute (deuren, trap, lift) checkt u vóór bestelling. Grote banken en kasten komen vaak in delen. Montage van meubels is niet standaard inbegrepen.',
     },
     filterSchema: 'furniture',
     image: assets.categoryMeubels,
@@ -284,7 +284,7 @@ export const CATALOG_TAXONOMY: TaxonomyRoot[] = [
     seoDescription: 'Horeca-apparatuur, meubilair en keukeninrichting bij AllRound Direct.',
     content: {
       heading: 'Horeca inkopen via de webshop of offerte',
-      body: 'Losse apparaten bestelt u online wanneer prijs en levertijd op het product staan. Voor een complete keukenlijn, grotere aantallen of projectlevering is een zakelijke offerte meestal passender. Aansluitwaarden en indeling checkt u tegen de specificatie, niet tegen een algemene belofte.',
+      body: 'Losse apparaten bestelt u online wanneer prijs en voorraad op het product staan. Levering is standaard binnen 1 tot 3 werkdagen. Voor een complete keukenlijn, grotere aantallen of projectlevering is een zakelijke offerte meestal passender. Aansluitwaarden en indeling checkt u tegen de specificatie, niet tegen een algemene belofte.',
     },
     filterSchema: 'horeca',
     image: assets.categoryHoreca,

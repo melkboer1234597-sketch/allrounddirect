@@ -31,7 +31,7 @@ const BRANDS: Record<string, string[]> = {
 
 const COLORS = ['beige', 'grijs', 'zwart', 'groen', 'bruin', 'eiken', 'wit'] as const
 const MATERIALS = ['stof', 'hout', 'metaal', 'rvs', 'leerlook'] as const
-const LEAD = ['1-2 weken', '2-4 weken', '4-8 weken', 'Op aanvraag'] as const
+const LEAD = ['1-3 werkdagen'] as const
 const STOCK: StockStatus[] = ['in_stock', 'in_stock', 'backorder', 'unknown']
 
 function hash(input: string): number {

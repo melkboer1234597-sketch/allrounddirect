@@ -37,7 +37,7 @@ function FooterColumn({ title, items }: { title: string; items: readonly FooterN
       <p className="text-[12px] font-semibold tracking-[0.06em] text-white uppercase">{title}</p>
       <ul className="mt-4 space-y-2.5">
         {items.map((item) => (
-          <li key={item.href ?? item.label}>
+          <li key={item.label}>
             <FooterItem item={item} />
           </li>
         ))}
@@ -58,7 +58,7 @@ function FooterAccordion({ title, items }: { title: string; items: readonly Foot
       </summary>
       <ul className="space-y-2.5 pb-4">
         {items.map((item) => (
-          <li key={item.href ?? item.label}>
+          <li key={item.label}>
             <span className="block min-h-10 py-1">
               <FooterItem item={item} />
             </span>
@@ -83,7 +83,7 @@ export function Footer() {
             <img
               src={assets.logoWhite}
               alt="AllRound Direct"
-              className="logo-on-dark h-9 w-auto max-w-[200px] object-contain md:h-10"
+              className="h-9 w-auto max-w-[200px] object-contain md:h-10"
             />
           </Link>
           <p className="mt-3 text-[14px] leading-relaxed text-white/70">

@@ -51,7 +51,7 @@ export function InvoicesPage() {
     <ComingSoonAccountPage
       title="Facturen"
       path="/account/facturen"
-      description="Facturen downloaden volgt wanneer checkout en facturatie live zijn. Tot die tijd blijven wettelijk vereiste factuurgegevens in de orderadministratie bewaard."
+      description="Factuur-pdf’s in het klantaccount volgen nog. Order- en betaalgegevens staan al in uw bestelling en in onze administratie."
     />
   )
 }
@@ -61,7 +61,7 @@ export function ReturnsPage() {
     <ComingSoonAccountPage
       title="Retouren"
       path="/account/retouren"
-      description="Retour aanvragen volgt later. Tot die tijd staat het retourbeleid op de pagina Retourneren."
+      description="Online retouraanvragen in het account volgen later. Tot die tijd gebruikt u het retourbeleid of neemt u contact op."
     />
   )
 }

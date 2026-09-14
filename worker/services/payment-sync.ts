@@ -1,18 +1,16 @@
 import { eq } from 'drizzle-orm'
 import { canTransitionOrder } from '../../shared/order-machine'
+import {
+  mapOrderPaymentStatus,
+  shouldEmitPaymentConfirmed,
+  shouldRecordFailedPaymentAttempt,
+} from '../../shared/payment-ui'
 import type { AppEnv } from '../types'
 import { createDb } from '../db'
 import { orderStatusHistory, orders, payments, processedWebhooks } from '../db/schema'
 import { newId } from '../lib/request'
 import { createPaymentsService, mapMollieStatus } from './mollie'
 import { emitOrderEvent } from './order-events'
-
-function orderPaymentStatus(mapped: ReturnType<typeof mapMollieStatus>): string {
-  if (mapped === 'paid') return 'paid'
-  if (mapped === 'refunded') return 'refunded'
-  if (mapped === 'failed' || mapped === 'canceled' || mapped === 'expired') return 'failed'
-  return 'pending'
-}
 
 export async function syncProviderPayment(
   env: AppEnv['Bindings'],
@@ -30,6 +28,7 @@ export async function syncProviderPayment(
 
   const alreadySame = payment.status === mapped
   const now = new Date()
+  let webhookSeenBefore = false
   try {
     await db.insert(processedWebhooks).values({
       externalKey: `mollie:${remote.id}:${mapped}`,
@@ -37,7 +36,7 @@ export async function syncProviderPayment(
       createdAt: now,
     })
   } catch {
-    /* dezelfde providerstatus is al gezien; we reconcilen hieronder nog idempotent */
+    webhookSeenBefore = true
   }
 
   if (!alreadySame) {
@@ -53,10 +52,13 @@ export async function syncProviderPayment(
   }
 
   const order = (await db.select().from(orders).where(eq(orders.id, payment.orderId)).limit(1))[0]
-  if (!order) return { duplicate: alreadySame, status: mapped, orderId: payment.orderId }
+  if (!order) {
+    return { duplicate: alreadySame || webhookSeenBefore, status: mapped, orderId: payment.orderId }
+  }
 
   if (mapped === 'paid') {
-    if (order.paymentStatus !== 'paid') {
+    const firstPaid = shouldEmitPaymentConfirmed(order.paymentStatus, mapped)
+    if (firstPaid) {
       const nextStatus = canTransitionOrder(order.status, 'payment_received')
         ? 'payment_received'
         : order.status
@@ -82,48 +84,47 @@ export async function syncProviderPayment(
         note: 'Betaling bevestigd via geverifieerde Mollie-status',
         createdAt: now,
       })
-    }
-    await emitOrderEvent(env, {
-      type: 'PAYMENT_CONFIRMED',
-      orderId: order.id,
-      entityType: 'order',
-      entityId: order.id,
-    })
-  } else {
-    const nextPaymentStatus = orderPaymentStatus(mapped)
-    if (nextPaymentStatus !== order.paymentStatus) {
-      await db
-        .update(orders)
-        .set({ paymentStatus: nextPaymentStatus, updatedAt: now })
-        .where(eq(orders.id, order.id))
-    }
-    if (
-      (mapped === 'canceled' || mapped === 'expired' || mapped === 'failed') &&
-      order.status === 'pending_payment' &&
-      canTransitionOrder(order.status, 'cancelled')
-    ) {
-      await db
-        .update(orders)
-        .set({ status: 'cancelled', paymentStatus: nextPaymentStatus, updatedAt: now })
-        .where(eq(orders.id, order.id))
-      await db.insert(orderStatusHistory).values({
-        id: newId(),
-        orderId: order.id,
-        fromStatus: order.status,
-        toStatus: 'cancelled',
-        source: 'webhook',
-        actorUserId: null,
-        note: `Betaling ${mapped}`,
-        createdAt: now,
-      })
       await emitOrderEvent(env, {
-        type: 'ORDER_CANCELLED',
+        type: 'PAYMENT_CONFIRMED',
         orderId: order.id,
         entityType: 'order',
         entityId: order.id,
       })
     }
+  } else if (
+    shouldRecordFailedPaymentAttempt(order.paymentStatus, mapped, order.status)
+  ) {
+    const nextPaymentStatus = mapOrderPaymentStatus(mapped)
+    await db
+      .update(orders)
+      .set({ paymentStatus: nextPaymentStatus, updatedAt: now })
+      .where(eq(orders.id, order.id))
+    // Keep order pending_payment so the customer can retry without duplicating the order.
+    await db.insert(orderStatusHistory).values({
+      id: newId(),
+      orderId: order.id,
+      fromStatus: order.status,
+      toStatus: order.status,
+      source: 'webhook',
+      actorUserId: null,
+      note: `Betaling ${mapped} — opnieuw betalen mogelijk`,
+      createdAt: now,
+    })
+    await emitOrderEvent(env, {
+      type: 'PAYMENT_FAILED',
+      orderId: order.id,
+      entityType: 'order',
+      entityId: order.id,
+      data: {
+        paymentId: payment.id,
+        mapped,
+      },
+    })
   }
 
-  return { duplicate: alreadySame, status: mapped, orderId: order.id }
+  return {
+    duplicate: alreadySame || webhookSeenBefore,
+    status: mapped,
+    orderId: order.id,
+  }
 }

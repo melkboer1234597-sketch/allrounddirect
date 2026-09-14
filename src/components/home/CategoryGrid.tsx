@@ -1,6 +1,5 @@
 import { CategoryCard } from '@/components/ui/CategoryCard'
 import { Container } from '@/components/ui/Container'
-import { SectionHeader } from '@/components/ui/SectionHeader'
 import { assets } from '@/lib/assets'
 
 const categories = [
@@ -8,104 +7,99 @@ const categories = [
     title: 'Meubels',
     href: '/meubels',
     image: assets.categoryMeubels,
-    alt: 'Woonkamer met hoekbank, stoel en dressoir',
+    alt: 'Meubels in een woonkamer',
+    objectPosition: 'center 55%',
+    cta: 'Bekijk meubels',
     size: 'large' as const,
-    objectPosition: 'center 60%',
+    className: 'lg:col-span-6',
   },
   {
     title: 'Vloeren',
     href: '/vloeren',
     image: assets.categoryVloeren,
-    alt: 'Houtlook vloer in een lichte woonkamer',
+    alt: 'Vloeren in een woonruimte',
+    objectPosition: 'center 75%',
+    cta: 'Bekijk vloeren',
     size: 'large' as const,
-    objectPosition: 'center 80%',
+    className: 'lg:col-span-6',
   },
   {
     title: 'Keuken',
     href: '/keuken',
     image: assets.hero,
-    alt: 'Moderne keuken met donkere kasten en RVS koelkast',
-    size: 'regular' as const,
-    objectPosition: '78% center',
+    alt: 'Moderne keuken',
+    objectPosition: '88% center',
+    cta: 'Bekijk keuken',
+    size: 'medium' as const,
+    className: 'lg:col-span-4',
   },
   {
     title: 'Koelen & Vriezen',
     href: '/koelen-vriezen',
     image: assets.categoryKoelen,
-    alt: 'Amerikaanse koelkast in een keuken',
-    size: 'regular' as const,
+    alt: 'Koelkast en vriesapparatuur',
     objectPosition: 'center',
+    cta: 'Bekijk koelen & vriezen',
+    size: 'medium' as const,
+    className: 'lg:col-span-4',
   },
   {
     title: 'Horeca',
     href: '/horeca',
     image: assets.categoryHoreca,
-    alt: 'Professionele horecakeuken in RVS',
-    size: 'regular' as const,
+    alt: 'Professionele horecakeuken',
     objectPosition: 'center',
+    cta: 'Bekijk horeca',
+    size: 'medium' as const,
+    className: 'lg:col-span-4',
   },
   {
     title: 'Wonen',
     href: '/wonen',
-    image: assets.categoryMeubels,
-    alt: 'Woonkamerinrichting',
-    size: 'regular' as const,
-    objectPosition: 'center',
+    image: assets.hero,
+    alt: 'Woonruimte met meubels',
+    objectPosition: '22% center',
+    cta: 'Bekijk wonen',
+    size: 'compact' as const,
+    className: 'lg:col-span-4',
+  },
+  {
+    title: 'Huishouden',
+    href: '/huishouden',
+    image: assets.sectionBusiness,
+    alt: 'Huishoudelijke apparatuur en producten',
+    objectPosition: '60% center',
+    cta: 'Bekijk huishouden',
+    size: 'compact' as const,
+    className: 'lg:col-span-4',
   },
   {
     title: 'Outlet',
     href: '/outlet',
     image: assets.sectionOutlet,
-    alt: 'Outletopstelling met meubels, keuken en magazijnvoorraad',
-    size: 'regular' as const,
+    alt: 'Outlet en tijdelijke partijen',
     objectPosition: 'left center',
+    cta: 'Bekijk outlet',
+    size: 'compact' as const,
+    className: 'lg:col-span-4',
   },
-]
+] as const
 
 export function CategoryGrid() {
-  const [meubels, vloeren, ...rest] = categories
-
   return (
     <section aria-labelledby="categories-heading" className="section-space">
       <Container>
-        <SectionHeader
-          titleId="categories-heading"
-          title="Waar bent u naar op zoek?"
-          description="Bekijk onze belangrijkste productgroepen."
-        />
-
-        <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
-          <CategoryCard
-            href={meubels.href}
-            title={meubels.title}
-            image={meubels.image}
-            imageAlt={meubels.alt}
-            size="large"
-            objectPosition={meubels.objectPosition}
-            className="xl:col-span-2"
-          />
-          <CategoryCard
-            href={vloeren.href}
-            title={vloeren.title}
-            image={vloeren.image}
-            imageAlt={vloeren.alt}
-            size="large"
-            objectPosition={vloeren.objectPosition}
-            className="xl:col-span-2"
-          />
-          {rest.map((item) => (
-            <CategoryCard
-              key={item.href}
-              href={item.href}
-              title={item.title}
-              image={item.image}
-              imageAlt={item.alt}
-              objectPosition={item.objectPosition}
-            />
-          ))}
+        <div className="mb-5 md:mb-6">
+          <h2 id="categories-heading" className="heading-section text-ink">
+            Waar bent u naar op zoek?
+          </h2>
+          <p className="mt-1.5 text-[14px] text-muted md:text-[15px]">
+            Kies een productgroep en ga verder in het assortiment.
+          </p>
         </div>
 
-        <div className="category-scroll md:hidden">
+        {/* Mobile / tablet: 2-column discovery grid */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-3.5 lg:hidden">
           {categories.map((item) => (
             <CategoryCard
               key={item.href}
@@ -113,8 +107,26 @@ export function CategoryGrid() {
               title={item.title}
               image={item.image}
               imageAlt={item.alt}
+              cta={item.cta}
+              size={item.size === 'large' ? 'medium' : 'compact'}
               objectPosition={item.objectPosition}
-              className="w-[min(70vw,260px)] shrink-0 snap-start"
+            />
+          ))}
+        </div>
+
+        {/* Desktop: editorial 2 / 3 / 3 layout */}
+        <div className="hidden gap-3.5 lg:grid lg:grid-cols-12 lg:gap-4">
+          {categories.map((item) => (
+            <CategoryCard
+              key={item.href}
+              href={item.href}
+              title={item.title}
+              image={item.image}
+              imageAlt={item.alt}
+              cta={item.cta}
+              size={item.size}
+              objectPosition={item.objectPosition}
+              className={item.className}
             />
           ))}
         </div>

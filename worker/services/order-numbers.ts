@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
-import type { AppEnv } from '../types'
+import { formatOrderNumber } from '../../shared/order-numbers'
 import { createDb } from '../db'
 import { orderNumberCounters } from '../db/schema'
+import type { AppEnv } from '../types'
 
 export async function nextOrderNumber(env: AppEnv['Bindings']): Promise<string> {
   const year = new Date().getUTCFullYear()
@@ -20,5 +21,5 @@ export async function nextOrderNumber(env: AppEnv['Bindings']): Promise<string> 
   } else {
     await db.insert(orderNumberCounters).values({ year, lastValue: next })
   }
-  return `ARD-${year}-${String(next).padStart(6, '0')}`
+  return formatOrderNumber(year, next)
 }

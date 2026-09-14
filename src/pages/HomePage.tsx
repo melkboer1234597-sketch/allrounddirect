@@ -1,6 +1,5 @@
 import { SeoHead } from '@/components/seo/SeoHead'
 import { SITE } from '@/config/site'
-import { assets } from '@/lib/assets'
 import { Hero } from '@/components/home/Hero'
 import { CategoryGrid } from '@/components/home/CategoryGrid'
 import { TrustStrip } from '@/components/home/TrustStrip'
@@ -19,11 +18,8 @@ export function HomePage() {
         title={SITE.defaultTitle}
         description={SITE.defaultDescription}
         path="/"
-        image={assets.hero}
-        imageAlt="Open woonkeuken met bank, eettafel, houten vloer en keuken"
         includeWebsiteSchema
         robots="index,follow"
-        preloadImage
       />
       <main id="main">
         <Hero />

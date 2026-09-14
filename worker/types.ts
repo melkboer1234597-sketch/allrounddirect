@@ -14,7 +14,11 @@ export type AppEnv = {
     RESEND_API_KEY?: string
     EMAIL_FROM?: string
     EMAIL_REPLY_TO?: string
+    /** Optional alias; falls back to SITE_URL. */
+    PUBLIC_SITE_URL?: string
     MOLLIE_MODE?: string
     MOLLIE_ALLOW_LIVE?: string
+    /** When true, refuse any live Mollie refund (CI / automated tests). */
+    MOLLIE_BLOCK_LIVE_REFUNDS?: string
   }
 }

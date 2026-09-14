@@ -5,10 +5,12 @@ export function isDevelopment(env: AppEnv['Bindings']): boolean {
 }
 
 export function getSiteOrigin(env: AppEnv['Bindings']): string {
-  const fromAuth = env.BETTER_AUTH_URL?.replace(/\/$/, '')
-  if (fromAuth) return fromAuth
+  const fromPublic = env.PUBLIC_SITE_URL?.replace(/\/$/, '')
+  if (fromPublic) return fromPublic
   const fromSite = env.SITE_URL?.replace(/\/$/, '')
   if (fromSite) return fromSite
+  const fromAuth = env.BETTER_AUTH_URL?.replace(/\/$/, '')
+  if (fromAuth) return fromAuth
   return 'http://localhost:5173'
 }
 

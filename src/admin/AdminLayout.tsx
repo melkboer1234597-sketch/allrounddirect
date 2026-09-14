@@ -36,6 +36,7 @@ const GROUPS = [
     label: 'Catalogus',
     items: [
       { to: '/scotdejewish/products', label: 'Producten', icon: Package },
+      { to: '/scotdejewish/quality', label: 'Kwaliteit', icon: FileText },
       { to: '/scotdejewish/categories', label: 'Categorieën', icon: Tag },
       { to: '/scotdejewish/brands', label: 'Merken', icon: Tag },
       { to: '/scotdejewish/suppliers', label: 'Leveranciers', icon: Truck },
@@ -60,6 +61,7 @@ const GROUPS = [
       { to: '/scotdejewish/media', label: 'Media', icon: Image },
       { to: '/scotdejewish/users', label: 'Gebruikers', icon: Users },
       { to: '/scotdejewish/settings', label: 'Instellingen', icon: Settings },
+      { to: '/scotdejewish/email-preview', label: 'E-mail preview', icon: FileText },
       { to: '/scotdejewish/audit-log', label: 'Auditlog', icon: FileText },
     ],
   },

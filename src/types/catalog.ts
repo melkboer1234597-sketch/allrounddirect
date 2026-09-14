@@ -10,6 +10,7 @@ export type StockStatus = 'in_stock' | 'out_of_stock' | 'backorder' | 'unknown'
 
 export type ProductImage = {
   src: string
+  cardSrc?: string
   alt: string
   width?: number
   height?: number
@@ -37,6 +38,8 @@ export type CatalogProduct = {
   leadTime?: string
   supplierId?: string
   images: ProductImage[]
+  description?: string
+  shortDescription?: string
   attributes: ProductAttributes
   specifications?: Record<string, string>
   isBusinessOnly?: boolean

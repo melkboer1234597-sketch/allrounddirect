@@ -36,6 +36,48 @@
       "when": 1789398000000,
       "tag": "0004_catalog_import",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789400000000,
+      "tag": "0005_catalog_quality",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789401000000,
+      "tag": "0006_checkout_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789402000000,
+      "tag": "0007_email_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1789403000000,
+      "tag": "0008_refund_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1789404000000,
+      "tag": "0009_order_idempotency_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789405000000,
+      "tag": "0010_normalize_delivery_policy",
+      "breakpoints": true
     }
   ]
 }

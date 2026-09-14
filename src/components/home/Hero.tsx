@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button'
+import { CoverImage } from '@/components/media/CoverImage'
 import { assets } from '@/lib/assets'
 
 export function Hero() {
@@ -6,14 +7,14 @@ export function Hero() {
     <section aria-labelledby="hero-heading" className="bg-navy">
       <div className="relative mx-auto max-w-[1600px] overflow-hidden">
         <div className="relative min-h-[300px] sm:min-h-[440px] md:min-h-[500px] lg:min-h-[560px]">
-          <img
+          <CoverImage
             src={assets.hero}
-            alt="Open woonkeuken met bank, eettafel, houten vloer en keuken"
+            alt="Wonen en keuken bij AllRound Direct"
             width={1920}
             height={1080}
+            loading="eager"
             fetchPriority="high"
-            decoding="sync"
-            className="absolute inset-0 h-full w-full object-cover object-[62%_center] sm:object-[48%_center] lg:object-[42%_center]"
+            className="absolute inset-0 object-[62%_center] sm:object-[48%_center] lg:object-[42%_center]"
           />
           <div className="absolute inset-0 bg-linear-to-t from-navy/80 via-navy/50 to-navy/25 sm:bg-linear-to-r sm:from-navy/80 sm:via-navy/40 sm:to-navy/10 lg:via-navy/30 lg:to-transparent" />
           <div className="container-page relative flex min-h-[300px] items-end py-7 sm:items-center sm:py-12 sm:min-h-[440px] md:min-h-[500px] lg:min-h-[560px]">

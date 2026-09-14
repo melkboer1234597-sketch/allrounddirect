@@ -28,19 +28,14 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
         { value: 'backorder', label: 'Nalevering' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
     {
       id: 'leadTime',
       label: 'Levertijd',
       type: 'enum',
-      options: [
-        { value: '1-2 weken', label: '1-2 weken' },
-        { value: '2-4 weken', label: '2-4 weken' },
-        { value: '4-8 weken', label: '4-8 weken' },
-        { value: 'Op aanvraag', label: 'Op aanvraag' },
-      ],
+      options: [{ value: '1-3 werkdagen', label: '1-3 werkdagen' }],
     },
     { id: 'outlet', label: 'Outlet', type: 'boolean' },
   ],
@@ -100,18 +95,14 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
         { value: 'backorder', label: 'Nalevering' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
     {
       id: 'leadTime',
       label: 'Levertijd',
       type: 'enum',
-      options: [
-        { value: '1-2 weken', label: '1-2 weken' },
-        { value: '2-4 weken', label: '2-4 weken' },
-        { value: '4-8 weken', label: '4-8 weken' },
-      ],
+      options: [{ value: '1-3 werkdagen', label: '1-3 werkdagen' }],
     },
     { id: 'outlet', label: 'Outlet', type: 'boolean' },
   ],
@@ -207,7 +198,7 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       type: 'enum',
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
     { id: 'outlet', label: 'Outlet', type: 'boolean' },
@@ -265,7 +256,7 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       type: 'enum',
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
   ],
@@ -311,7 +302,7 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       type: 'enum',
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
   ],
@@ -358,18 +349,14 @@ export const FILTER_SCHEMAS: Record<string, FilterDefinition[]> = {
       type: 'enum',
       options: [
         { value: 'in_stock', label: 'Op voorraad' },
-        { value: 'unknown', label: 'Op aanvraag' },
+        { value: 'unknown', label: 'Onbekend' },
       ],
     },
     {
       id: 'leadTime',
       label: 'Levertijd',
       type: 'enum',
-      options: [
-        { value: '2-4 weken', label: '2-4 weken' },
-        { value: '4-8 weken', label: '4-8 weken' },
-        { value: 'Op aanvraag', label: 'Op aanvraag' },
-      ],
+      options: [{ value: '1-3 werkdagen', label: '1-3 werkdagen' }],
     },
   ],
   outlet: [

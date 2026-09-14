@@ -53,16 +53,16 @@ export const termsDoc: LegalDoc = {
       id: 'levering',
       title: 'Levering',
       paragraphs: [
-        'We leveren op het opgegeven afleveradres in Nederland, tenzij een product anders vermeldt. Er is geen standaard showroom of afhaalpunt.',
-        'Veel artikelen worden via leveranciers verzonden. Levertijden staan per product, niet als algemene belofte zoals “morgen in huis”.',
-        'Zie de pagina Bezorgen voor deelzendingen, grote artikelen en wat te doen bij beschadiging of niet thuis.',
+        'We leveren op het opgegeven afleveradres in Nederland en België, tenzij een product of offerte uitdrukkelijk anders vermeldt. Er is geen standaard showroom of afhaalpunt.',
+        'De standaard levertijd voor verkoopbare producten is 1 tot 3 werkdagen. We beloven geen next-day levering voor het hele assortiment.',
+        'Zie de pagina Bezorgen voor gratis verzending, deelzendingen, grote artikelen en wat te doen bij beschadiging of niet thuis.',
       ],
     },
     {
       id: 'levertijden',
       title: 'Levertijden',
       paragraphs: [
-        'Een genoemde levertijd is een indicatie op basis van product- en leveranciersinformatie, geen resultaatsverplichting tot een vaste dag, tenzij uitdrukkelijk schriftelijk anders overeengekomen.',
+        'De vermelde standaard levertijd (1 tot 3 werkdagen) is een indicatie voor de gebruikelijke afhandeling. Het is geen resultaatsverplichting tot een vaste kalenderdag, tenzij uitdrukkelijk schriftelijk anders overeengekomen. Feitelijke planning kan afhangen van order- en productlogistiek waar dat operationeel of wettelijk nodig is.',
         'Als levering aanzienlijk later dreigt dan aangegeven, informeren we u. Consumenten houden hun wettelijke rechten bij te late levering.',
       ],
     },

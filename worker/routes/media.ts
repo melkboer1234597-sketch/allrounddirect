@@ -21,7 +21,9 @@ mediaRoutes.get('/*', async (c) => {
   }
 
   if (c.env.ASSETS) {
-    return c.env.ASSETS.fetch(c.req.raw)
+    const asset = await c.env.ASSETS.fetch(c.req.raw)
+    const type = asset.headers.get('Content-Type') ?? ''
+    if (asset.ok && type.startsWith('image/')) return asset
   }
   return c.body('Not found', 404)
 })

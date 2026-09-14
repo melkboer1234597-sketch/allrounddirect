@@ -3,12 +3,14 @@ import { Link, NavLink } from 'react-router-dom'
 import { CATALOG_TAXONOMY, flattenTaxonomyChildren, type TaxonomyRoot } from '@/data/taxonomy'
 import { Container } from '@/components/ui/Container'
 import { cn } from '@/lib/cn'
+import { useHomeMedia } from '@/hooks/useHomeMedia'
 
 const OPEN_DELAY = 120
 const CLOSE_DELAY = 220
 
 export function DesktopNav() {
   const [openSlug, setOpenSlug] = useState<string | null>(null)
+  const { data: homeMedia } = useHomeMedia()
   const openTimer = useRef<number | undefined>(undefined)
   const closeTimer = useRef<number | undefined>(undefined)
   const navRef = useRef<HTMLElement>(null)
@@ -86,7 +88,12 @@ export function DesktopNav() {
           onMouseEnter={clearTimers}
           onMouseLeave={scheduleClose}
         >
-          <MegaPanel category={active} labelledBy={labelId} onNavigate={() => setOpenSlug(null)} />
+          <MegaPanel
+            category={active}
+            coverSrc={homeMedia?.bySlug[active.slug] || active.image}
+            labelledBy={labelId}
+            onNavigate={() => setOpenSlug(null)}
+          />
         </div>
       ) : null}
     </nav>
@@ -95,10 +102,12 @@ export function DesktopNav() {
 
 function MegaPanel({
   category,
+  coverSrc,
   labelledBy,
   onNavigate,
 }: {
   category: TaxonomyRoot
+  coverSrc?: string
   labelledBy: string
   onNavigate: () => void
 }) {
@@ -182,7 +191,11 @@ function MegaPanel({
           onClick={onNavigate}
           className="col-span-3 overflow-hidden rounded-[12px]"
         >
-          <img src={category.image} alt="" className="h-44 w-full object-cover" />
+          {coverSrc ? (
+            <img src={coverSrc} alt="" className="h-44 w-full object-cover" />
+          ) : (
+            <div className="h-44 w-full bg-navy" />
+          )}
           <span className="mt-2 block text-[14px] font-medium">{category.name}</span>
         </Link>
       </div>

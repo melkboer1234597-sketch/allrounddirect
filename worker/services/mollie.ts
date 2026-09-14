@@ -4,6 +4,9 @@
  */
 import createMollieClient from '@mollie/api-client'
 import { eq } from 'drizzle-orm'
+import type { CheckoutCountry, MollieLocale } from '../../shared/checkout'
+import { sortPaymentMethods } from '../../shared/checkout'
+import { centsToMollieValue, mollieValueToCents } from '../../shared/money'
 import type { AppEnv } from '../types'
 import { createDb } from '../db'
 import { devMolliePayments } from '../db/schema'
@@ -22,17 +25,52 @@ export type ProviderPayment = {
   metadata: Record<string, string>
 }
 
+export type PaymentMethodInfo = {
+  id: string
+  description: string
+  image: { size1x?: string; size2x?: string; svg?: string }
+}
+
+export type CreatePaymentInput = {
+  amountCents: number
+  currency: string
+  description: string
+  redirectUrl: string
+  webhookUrl: string
+  metadata: Record<string, string>
+  locale?: MollieLocale
+  method?: string
+  restrictPaymentMethodsToCountry?: CheckoutCountry
+  billingAddress?: {
+    givenName?: string
+    familyName?: string
+    email?: string
+    streetAndNumber?: string
+    postalCode?: string
+    city?: string
+    country?: string
+  }
+  shippingAddress?: {
+    givenName?: string
+    familyName?: string
+    email?: string
+    streetAndNumber?: string
+    postalCode?: string
+    city?: string
+    country?: string
+  }
+}
+
 export type PaymentsService = {
   mode: MollieMode
   isMock: boolean
-  createPayment: (input: {
+  listMethods: (input: {
     amountCents: number
-    currency: string
-    description: string
-    redirectUrl: string
-    webhookUrl: string
-    metadata: Record<string, string>
-  }) => Promise<ProviderPayment>
+    currency?: string
+    country: CheckoutCountry
+    locale?: MollieLocale
+  }) => Promise<PaymentMethodInfo[]>
+  createPayment: (input: CreatePaymentInput) => Promise<ProviderPayment>
   getPayment: (id: string) => Promise<ProviderPayment>
   refundPayment: (input: {
     paymentId: string
@@ -42,14 +80,6 @@ export type PaymentsService = {
 }
 
 export class MollieConfigError extends Error {}
-
-function parseAmount(value: string): number {
-  return Math.round(Number.parseFloat(value) * 100)
-}
-
-function formatAmount(cents: number): string {
-  return (cents / 100).toFixed(2)
-}
 
 export function resolveMollieMode(env: AppEnv['Bindings']): MollieMode {
   const mode = (env.MOLLIE_MODE ?? 'test').trim().toLowerCase()
@@ -90,6 +120,27 @@ export function assertMollieAllowed(env: AppEnv['Bindings']): {
   return { mode, apiKey }
 }
 
+/** Safe label for admin/dev — never expose the key. */
+export function mollieEnvironmentLabel(env: AppEnv['Bindings']): {
+  mode: MollieMode
+  label: string
+  configured: boolean
+} {
+  try {
+    const { mode, apiKey } = assertMollieAllowed(env)
+    if (!apiKey) {
+      return { mode, label: 'Mollie mock (development)', configured: false }
+    }
+    return {
+      mode,
+      label: mode === 'live' ? 'Mollie livemodus' : 'Mollie testmodus',
+      configured: true,
+    }
+  } catch {
+    return { mode: 'test', label: 'Mollie niet geconfigureerd', configured: false }
+  }
+}
+
 function mapPayment(input: {
   id: string
   status: string
@@ -103,7 +154,7 @@ function mapPayment(input: {
   return {
     id: input.id,
     status: input.status,
-    amountCents: parseAmount(input.amountValue),
+    amountCents: mollieValueToCents(input.amountValue),
     currency: input.currency,
     checkoutUrl: input.checkoutUrl ?? null,
     method: input.method ?? null,
@@ -112,10 +163,45 @@ function mapPayment(input: {
   }
 }
 
+const MOCK_METHODS: PaymentMethodInfo[] = [
+  {
+    id: 'ideal',
+    description: 'iDEAL',
+    image: { svg: 'https://www.mollie.com/external/icons/payment-methods/ideal.svg' },
+  },
+  {
+    id: 'bancontact',
+    description: 'Bancontact',
+    image: { svg: 'https://www.mollie.com/external/icons/payment-methods/bancontact.svg' },
+  },
+  {
+    id: 'creditcard',
+    description: 'Creditcard',
+    image: { svg: 'https://www.mollie.com/external/icons/payment-methods/creditcard.svg' },
+  },
+  {
+    id: 'paypal',
+    description: 'PayPal',
+    image: { svg: 'https://www.mollie.com/external/icons/payment-methods/paypal.svg' },
+  },
+  {
+    id: 'banktransfer',
+    description: 'Overboeking',
+    image: { svg: 'https://www.mollie.com/external/icons/payment-methods/banktransfer.svg' },
+  },
+]
+
 function createMockService(env: AppEnv['Bindings']): PaymentsService {
   return {
     mode: 'test',
     isMock: true,
+    async listMethods(input) {
+      const filtered =
+        input.country === 'BE'
+          ? MOCK_METHODS.filter((m) => m.id !== 'ideal')
+          : MOCK_METHODS.filter((m) => m.id !== 'bancontact')
+      return sortPaymentMethods(input.country, filtered)
+    },
     async createPayment(input) {
       const db = createDb(env)
       const id = `tr_dev_${newId().replaceAll('-', '').slice(0, 16)}`
@@ -135,7 +221,7 @@ function createMockService(env: AppEnv['Bindings']): PaymentsService {
         amountCents: input.amountCents,
         currency: input.currency,
         checkoutUrl: `${input.redirectUrl}${input.redirectUrl.includes('?') ? '&' : '?'}devPayment=${id}`,
-        method: null,
+        method: input.method ?? null,
         mode: 'test',
         metadata: input.metadata,
       }
@@ -158,7 +244,7 @@ function createMockService(env: AppEnv['Bindings']): PaymentsService {
       }
     },
     async refundPayment(_input) {
-      return { id: `re_dev_${newId().slice(0, 8)}`, status: 'pending' }
+      return { id: `re_dev_${newId().slice(0, 8)}`, status: 'refunded' }
     },
   }
 }
@@ -174,14 +260,44 @@ export function createPaymentsService(env: AppEnv['Bindings']): PaymentsService 
   return {
     mode,
     isMock: false,
+    async listMethods(input) {
+      const list = (await client.methods.list({
+        amount: {
+          currency: input.currency ?? 'EUR',
+          value: centsToMollieValue(Math.max(input.amountCents, 100)),
+        },
+        locale: input.locale as never,
+        billingCountry: input.country,
+      })) as unknown as Array<{
+        id: string
+        description: string
+        image?: { size1x?: string; size2x?: string; svg?: string }
+      }>
+      const methods = (Array.isArray(list) ? list : []).map((method) => ({
+        id: method.id,
+        description: method.description,
+        image: {
+          size1x: method.image?.size1x,
+          size2x: method.image?.size2x,
+          svg: method.image?.svg,
+        },
+      }))
+      return sortPaymentMethods(input.country, methods)
+    },
     async createPayment(input) {
-      const payment = await client.payments.create({
-        amount: { currency: input.currency, value: formatAmount(input.amountCents) },
+      const payload = {
+        amount: { currency: input.currency, value: centsToMollieValue(input.amountCents) },
         description: input.description,
         redirectUrl: input.redirectUrl,
         webhookUrl: input.webhookUrl,
         metadata: input.metadata,
-      })
+        locale: input.locale as never,
+        method: input.method as never,
+        restrictPaymentMethodsToCountry: input.restrictPaymentMethodsToCountry,
+        billingAddress: input.billingAddress,
+        shippingAddress: input.shippingAddress,
+      }
+      const payment = await client.payments.create(payload as never)
       const links = payment._links as { checkout?: { href?: string } }
       return mapPayment({
         id: payment.id,
@@ -189,7 +305,7 @@ export function createPaymentsService(env: AppEnv['Bindings']): PaymentsService 
         amountValue: payment.amount.value,
         currency: payment.amount.currency,
         checkoutUrl: links.checkout?.href ?? null,
-        method: payment.method ?? null,
+        method: payment.method ?? input.method ?? null,
         mode,
         metadata: (payment.metadata as Record<string, string> | null) ?? input.metadata,
       })
@@ -211,7 +327,7 @@ export function createPaymentsService(env: AppEnv['Bindings']): PaymentsService 
     async refundPayment(input) {
       const refund = await client.paymentRefunds.create({
         paymentId: input.paymentId,
-        amount: { currency: 'EUR', value: formatAmount(input.amountCents) },
+        amount: { currency: 'EUR', value: centsToMollieValue(input.amountCents) },
         description: input.description,
       })
       return { id: refund.id, status: refund.status }
@@ -231,8 +347,10 @@ export async function setDevMollieStatus(env: AppEnv['Bindings'], id: string, st
 
 export function mapMollieStatus(
   status: string,
-): 'open' | 'paid' | 'failed' | 'canceled' | 'expired' | 'refunded' {
+): 'open' | 'pending' | 'authorized' | 'paid' | 'failed' | 'canceled' | 'expired' | 'refunded' {
   if (status === 'paid') return 'paid'
+  if (status === 'authorized') return 'authorized'
+  if (status === 'pending') return 'pending'
   if (status === 'failed') return 'failed'
   if (status === 'canceled' || status === 'cancelled') return 'canceled'
   if (status === 'expired') return 'expired'

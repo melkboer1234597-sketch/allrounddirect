@@ -119,7 +119,7 @@ export const PUBLIC_PAGES: PageSeo[] = [
   page(
     '/bezorgen',
     'Bezorgen',
-    'Bestellingen worden geleverd op het opgegeven afleveradres. Levertijd kan per product en leverancier verschillen.',
+    'Levering in Nederland en België binnen 1 tot 3 werkdagen. Gratis verzending vanaf €999.',
   ),
   page(
     '/retourneren',
@@ -326,6 +326,7 @@ export const FOOTER_SERVICE: FooterNavItem[] = [
   { label: 'Contact', href: '/contact' },
   { label: 'Bestelling volgen', href: '/bestelling-volgen' },
   { label: 'Bezorgen', href: '/bezorgen' },
+  { label: 'Gratis verzending vanaf €999', href: '/bezorgen' },
   { label: 'Retourneren', href: '/retourneren' },
   { label: 'Overeenkomst herroepen', href: '/herroepen' },
   { label: 'Garantie en klachten', href: '/garantie-en-klachten' },

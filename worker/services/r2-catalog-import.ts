@@ -77,18 +77,18 @@ export async function ingestCatalogPayload(env: AppEnv['Bindings']) {
       updatedAt: now,
     }
     if (existing[0]) {
-      await db.update(products).set(values).where(eq(products.id, id))
+      await db.update(products).set({ ...values, status: 'active', robots: 'index,follow' }).where(eq(products.id, id))
     } else {
       await db.insert(products).values({
         id,
-        status: 'draft',
+        status: 'active',
         vatPercent: 21,
         stockStatus: 'unknown',
         isOutlet: false,
         isBusinessOnly: false,
         seoTitle: product.name,
         seoDescription: product.shortDescription,
-        robots: 'noindex,nofollow',
+        robots: 'index,follow',
         createdAt: now,
         ...values,
       })
@@ -154,6 +154,7 @@ async function seedCategories(db: ReturnType<typeof createDb>) {
   const all = await db.select().from(catalogCategories)
   const bySlug = new Map(all.map((item) => [item.slug, item.id]))
   for (const row of FOLDER_MAP) {
+    if (row.categorySlug === row.parentSlug) continue
     await upsertCategory(
       db,
       `cat-${row.categorySlug}`,

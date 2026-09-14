@@ -27,6 +27,8 @@ import {
   siteContent,
   suppliers,
   user,
+  payments,
+  emailEvents,
 } from '../db/schema'
 import { adminCsrf, requireStaff } from '../auth/rbac-guard'
 import { writeAudit } from '../lib/audit'
@@ -35,7 +37,15 @@ import { marginFrom } from '../lib/margin'
 import { newId } from '../lib/request'
 import { allowedOrderTransitions, canTransitionOrder } from '../../shared/order-machine'
 import { ORDER_STATUS_LABELS, isOrderStatus } from '../../shared/order-status'
+import { buildOrderTimeline } from '../../shared/order-timeline'
+import { resolveStorefrontDelivery } from '../../shared/commerce'
 import { emitOrderEvent } from '../services/order-events'
+import {
+  getRefundContext,
+  processAdminRefund,
+  RefundValidationError,
+} from '../services/refunds'
+import { MollieConfigError } from '../services/mollie'
 import {
   PRODUCT_STATUSES,
   QUOTE_STATUSES,
@@ -73,6 +83,7 @@ const productBody = z.object({
   leadTimeMaxDays: z.number().int().nullable().optional(),
   deliveryType: z.string().optional().nullable(),
   isOutlet: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
   isBusinessOnly: z.boolean().optional(),
   specificationsJson: z.string().optional().nullable(),
   seoTitle: z.string().optional().nullable(),
@@ -84,6 +95,10 @@ const productBody = z.object({
   sourceUrl: z.string().optional().nullable(),
   sourceProductId: z.string().optional().nullable(),
   sourceRightsStatus: z.string().optional().nullable(),
+  originalSourceName: z.string().optional().nullable(),
+  priceOnRequest: z.boolean().optional(),
+  reviewStatus: z.string().optional(),
+  qualityFlags: z.string().optional(),
   images: z.array(z.object({ url: z.string().url(), alt: z.string().optional() })).optional(),
 })
 
@@ -214,6 +229,8 @@ adminRoutes.get('/products', async (c) => {
   const missingPrice = c.req.query('missingPrice') === '1'
   const missingImage = c.req.query('missingImage') === '1'
   const rightsReview = c.req.query('rightsReview') === '1'
+  const qualityFlag = c.req.query('qualityFlag')?.trim()
+  const reviewStatus = c.req.query('reviewStatus')
   const conditions = []
   if (q) {
     conditions.push(
@@ -241,20 +258,28 @@ adminRoutes.get('/products', async (c) => {
   }
   if (missingImage) {
     conditions.push(
-      sql`not exists (select 1 from product_images pi where pi.product_id = ${products.id})`,
+      sql`not exists (select 1 from product_images pi where pi.product_id = ${products.id} and (pi.image_status is null or pi.image_status = 'ok'))`,
     )
+  }
+  if (reviewStatus === 'needs_review') {
+    conditions.push(eq(products.reviewStatus, 'needs_review'))
+  }
+  if (qualityFlag) {
+    conditions.push(like(products.qualityFlags, `%${qualityFlag}%`))
   }
   const rows = await db
     .select()
     .from(products)
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(products.updatedAt))
-    .limit(200)
+    .limit(500)
   const cats = await db.select().from(catalogCategories)
   const catMap = new Map(cats.map((item) => [item.id, item.name]))
   const images = await db.select().from(productImages)
   const firstImage = new Map<string, string>()
-  for (const image of images) {
+  const orderedImages = [...images].sort((a, b) => a.sortOrder - b.sortOrder)
+  for (const image of orderedImages) {
+    if (image.imageStatus && image.imageStatus !== 'ok') continue
     if (!firstImage.has(image.productId)) firstImage.set(image.productId, image.url)
   }
   return c.json({
@@ -272,10 +297,10 @@ adminRoutes.get('/products', async (c) => {
       stockStatus: item.stockStatus,
       sourceName: item.sourceName,
       sourceRightsStatus: item.sourceRightsStatus,
-      leadTime:
-        item.leadTimeMinDays != null
-          ? `${item.leadTimeMinDays}-${item.leadTimeMaxDays ?? item.leadTimeMinDays} dagen`
-          : null,
+      reviewStatus: item.reviewStatus,
+      qualityFlags: item.qualityFlags,
+      priceOnRequest: item.priceOnRequest,
+      leadTime: resolveStorefrontDelivery().labelShort,
       updatedAt: item.updatedAt,
       image: firstImage.get(item.id) ?? null,
     })),
@@ -341,6 +366,7 @@ adminRoutes.post('/products', async (c) => {
     leadTimeMaxDays: data.leadTimeMaxDays ?? null,
     deliveryType: data.deliveryType ?? null,
     isOutlet: data.isOutlet ?? false,
+    isFeatured: data.isFeatured ?? false,
     isBusinessOnly: data.isBusinessOnly ?? false,
     specificationsJson: data.specificationsJson ?? null,
     seoTitle: data.seoTitle ?? null,
@@ -448,6 +474,7 @@ adminRoutes.patch('/products/:id/images', async (c) => {
           id: z.string(),
           sortOrder: z.number().int(),
           isPrimary: z.boolean().optional(),
+          imageStatus: z.enum(['ok', 'suspicious', 'excluded']).optional(),
         }),
       ),
     })
@@ -460,6 +487,7 @@ adminRoutes.patch('/products/:id/images', async (c) => {
       .set({
         sortOrder: item.sortOrder,
         isPrimary: item.isPrimary ?? false,
+        ...(item.imageStatus ? { imageStatus: item.imageStatus } : {}),
       })
       .where(eq(productImages.id, item.id))
   }
@@ -745,6 +773,26 @@ adminRoutes.get('/orders/:id', async (c) => {
   const notes = await db.select().from(orderNotes).where(eq(orderNotes.orderId, order.id))
   const refundRows = await db.select().from(refunds).where(eq(refunds.orderId, order.id))
   const shipRows = await db.select().from(shipments).where(eq(shipments.orderId, order.id))
+  const history = await db
+    .select()
+    .from(orderStatusHistory)
+    .where(eq(orderStatusHistory.orderId, order.id))
+  const paymentRows = await db.select().from(payments).where(eq(payments.orderId, order.id))
+  const emailRows = await db
+    .select()
+    .from(emailEvents)
+    .where(eq(emailEvents.orderId, order.id))
+    .orderBy(desc(emailEvents.createdAt))
+
+  const timeline = buildOrderTimeline({
+    status: order.status,
+    placedAt: order.placedAt,
+    paidAt: order.paidAt,
+    history: history.map((row) => ({ toStatus: row.toStatus, createdAt: row.createdAt })),
+  })
+
+  const refundContext = await getRefundContext(c.env, order.id)
+
   return c.json({
     order: {
       ...order,
@@ -755,7 +803,15 @@ adminRoutes.get('/orders/:id', async (c) => {
     items,
     notes,
     refunds: refundRows,
-    shipments: shipRows,
+    shipments: shipRows.map((shipment, index) => ({
+      ...shipment,
+      label: shipment.publicLabel || `Zending ${index + 1}`,
+    })),
+    payments: paymentRows,
+    emailEvents: emailRows,
+    history,
+    timeline,
+    refundContext,
     allowedTransitions: isOrderStatus(order.status) ? allowedOrderTransitions(order.status) : [],
   })
 })
@@ -848,28 +904,53 @@ adminRoutes.post('/orders/:id/refunds', async (c) => {
   const { staff, response } = await requireStaff(c, 'orders.write')
   if (!staff) return response
   const body = z
-    .object({ amountCents: z.number().int().positive(), reason: z.string().optional() })
+    .object({
+      mode: z.enum(['full', 'partial']),
+      /** Ignored for full refunds — server computes remaining. Required for partial. */
+      amountCents: z.number().int().positive().optional(),
+      reason: z.string().trim().max(500).optional(),
+      idempotencyKey: z.string().trim().min(16).max(120),
+      confirmed: z.literal(true),
+    })
     .safeParse(await c.req.json())
-  if (!body.success) return c.json({ error: 'Ongeldige terugbetaling.' }, 400)
-  const db = createDb(c.env)
-  const id = newId()
-  await db.insert(refunds).values({
-    id,
-    orderId: c.req.param('id'),
-    paymentId: null,
-    providerRefundId: null,
-    amountCents: body.data.amountCents,
-    reason: body.data.reason ?? null,
-    status: 'pending',
-    createdAt: new Date(),
-  })
-  await writeAudit(db, staff, {
-    action: 'order.refund',
-    entity: 'order',
-    entityId: c.req.param('id'),
-    summary: `Terugbetaling ${body.data.amountCents} cent`,
-  })
-  return c.json({ id })
+  if (!body.success) {
+    return c.json(
+      {
+        error:
+          'Ongeldige terugbetaling. Vereist: mode (full|partial), bevestiging, idempotencyKey.',
+      },
+      400,
+    )
+  }
+
+  try {
+    const result = await processAdminRefund(c.env, {
+      orderId: c.req.param('id'),
+      mode: body.data.mode,
+      amountCents: body.data.amountCents,
+      reason: body.data.reason,
+      idempotencyKey: body.data.idempotencyKey,
+      confirmed: body.data.confirmed,
+      staff,
+    })
+    return c.json({
+      id: result.refund.id,
+      status: result.refund.status,
+      amountCents: result.refund.amountCents,
+      providerRefundId: result.refund.providerRefundId,
+      reused: result.reused,
+      remainingCents: result.remainingCents,
+    })
+  } catch (error) {
+    if (error instanceof RefundValidationError) {
+      return c.json({ error: error.message }, 400)
+    }
+    if (error instanceof MollieConfigError) {
+      return c.json({ error: error.message }, 503)
+    }
+    const message = error instanceof Error ? error.message : 'Terugbetaling mislukt.'
+    return c.json({ error: message }, 400)
+  }
 })
 
 adminRoutes.get('/returns', async (c) => {
@@ -1367,5 +1448,29 @@ adminRoutes.get('/settings', async (c) => {
         note: 'Better Auth twoFactor (TOTP) plugin later koppelen. Geen custom TOTP.',
       },
     },
+  })
+})
+
+/** Development/test only — HTML preview of transactional templates (no send). */
+adminRoutes.get('/email-preview', async (c) => {
+  const { staff, response } = await requireStaff(c, 'settings.write')
+  if (!staff) return response
+  if ((c.env.ENVIRONMENT ?? 'development') === 'production') {
+    return c.json({ error: 'Alleen beschikbaar buiten production.' }, 404)
+  }
+  const template = c.req.query('template') || 'order_confirmation'
+  const { EMAIL_TEMPLATES } = await import('../../shared/email-templates')
+  if (!(EMAIL_TEMPLATES as readonly string[]).includes(template)) {
+    return c.json({ error: 'Onbekende template.', templates: EMAIL_TEMPLATES }, 400)
+  }
+  const { createEmailService } = await import('../services/email')
+  const preview = createEmailService(c.env).preview(template as (typeof EMAIL_TEMPLATES)[number])
+  return c.json({
+    template,
+    subject: preview.subject,
+    html: preview.html,
+    text: preview.text,
+    templates: EMAIL_TEMPLATES,
+    note: 'Alleen preview — er wordt geen e-mail verzonden.',
   })
 })

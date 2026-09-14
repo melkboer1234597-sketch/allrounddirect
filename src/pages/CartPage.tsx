@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
 import { SeoHead } from '@/components/seo/SeoHead'
+import { FreeShippingProgress } from '@/components/commerce/FreeShippingProgress'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
 import { formatMoney } from '@/lib/money'
 import { useCart } from '@/lib/cart'
+import { eurosToCents } from '../../shared/money'
+import { deliveryLabelFull, freeShippingThresholdLabel } from '../../shared/commerce'
 
 export function CartPage() {
   const { lines, setQuantity, subtotal } = useCart()
+  const subtotalCents = eurosToCents(subtotal)
 
   return (
     <main id="main" className="section-space">
@@ -22,8 +26,7 @@ export function CartPage() {
           {lines.length === 0 ? (
             <>
               <p className="text-body mt-4 text-muted">
-                Er liggen geen artikelen in de winkelwagen. Afrekenen met Mollie is nog niet live; u
-                kunt wel producten toevoegen om de flow te testen.
+                Er liggen geen artikelen in de winkelwagen.
               </p>
               <div className="mt-8">
                 <Button to="/assortiment">Assortiment bekijken</Button>
@@ -72,9 +75,13 @@ export function CartPage() {
                   subtotal,
                 )}
               </p>
-              <p className="mt-2 text-[14px] text-muted">
-                Verzendkosten en btw-uitsplitsing volgen in de echte checkout. Betalen staat uit tot
-                Mollie live is gezet.
+              <FreeShippingProgress
+                eligibleSubtotalCents={subtotalCents}
+                className="mt-3"
+              />
+              <p className="mt-3 text-[13px] text-muted">
+                {deliveryLabelFull()}. {freeShippingThresholdLabel()}. Prijzen en verzending worden
+                bij afrekenen door de server bevestigd.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button to="/afrekenen">Naar afrekenen</Button>

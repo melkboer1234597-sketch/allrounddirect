@@ -1,42 +1,52 @@
 import { Building2, ClipboardList, MapPin, Truck } from 'lucide-react'
 import { Container } from '@/components/ui/Container'
+import {
+  deliveryLabelShort,
+  freeShippingThresholdLabel,
+} from '../../../shared/commerce'
 
 const items = [
   {
+    icon: MapPin,
+    title: 'Levering in heel Nederland en België',
+  },
+  {
     icon: Truck,
-    title: 'Levering in heel Nederland',
-    text: 'Bezorging op het afleveradres. Levertijd kan per product verschillen.',
+    title: freeShippingThresholdLabel(),
+    emphasize: true,
   },
   {
     icon: Building2,
     title: 'Voor particulier en zakelijk',
-    text: 'Bestellen voor thuis, kantoor, horeca of een project.',
   },
   {
     icon: ClipboardList,
-    title: 'Zakelijke offerte mogelijk',
-    text: 'Voor grotere aantallen maken we een passende aanvraag.',
-  },
-  {
-    icon: MapPin,
-    title: 'Via geselecteerde leveranciers',
-    text: 'Assortiment uit meerdere voorraden, geleverd bij u.',
+    title: `Levering ${deliveryLabelShort()}`,
   },
 ]
 
 export function TrustStrip() {
   return (
     <section aria-label="Voordelen" className="border-y border-line bg-surface">
-      <Container className="grid grid-cols-1 gap-4 py-6 min-[480px]:grid-cols-2 md:gap-8 md:py-10 lg:grid-cols-4 lg:py-12">
+      <Container className="grid grid-cols-2 gap-x-4 gap-y-3 py-4 sm:gap-x-6 md:py-5 lg:grid-cols-4 lg:gap-x-8 lg:py-5">
         {items.map((item) => {
           const Icon = item.icon
           return (
-            <div key={item.title} className="flex gap-3">
-              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
-              <div>
-                <p className="font-heading text-[15px] font-semibold text-ink">{item.title}</p>
-                <p className="mt-1 text-[14px] leading-relaxed text-muted">{item.text}</p>
-              </div>
+            <div key={item.title} className="flex items-start gap-2.5">
+              <Icon
+                className="mt-0.5 h-[18px] w-[18px] shrink-0 text-brand"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+              <p
+                className={
+                  item.emphasize
+                    ? 'font-heading text-[13px] leading-snug font-semibold text-ink sm:text-[14px]'
+                    : 'text-[13px] leading-snug text-ink sm:text-[14px]'
+                }
+              >
+                {item.title}
+              </p>
             </div>
           )
         })}

@@ -1,32 +1,37 @@
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
+import { CoverImage } from '@/components/media/CoverImage'
 import { assets } from '@/lib/assets'
+import {
+  deliveryLabelFull,
+  freeShippingThresholdLabel,
+} from '../../../shared/commerce'
 
 export function DeliverySection() {
   return (
     <section aria-labelledby="delivery-heading" className="section-space">
       <Container>
-        <div className="grid items-center gap-6 md:gap-8 lg:grid-cols-2 lg:gap-14">
-          <div className="media-frame">
-            <img
+        <div className="grid items-center gap-5 lg:grid-cols-2 lg:gap-10">
+          <div className="media-frame overflow-hidden bg-navy">
+            <CoverImage
               src={assets.sectionDelivery}
-              alt="Magazijn met pallets en een vrachtwagen klaar voor levering"
-              width={1400}
-              height={875}
-              loading="lazy"
-              decoding="async"
-              className="aspect-[16/10] w-full object-cover object-[70%_center] lg:aspect-[5/4]"
+              alt="Producten klaar voor levering"
+              width={1200}
+              height={720}
+              className="aspect-[16/10] max-h-[260px] w-full object-[70%_center] md:max-h-[320px] lg:aspect-auto lg:h-[min(360px,36vw)] lg:max-h-[360px]"
             />
           </div>
-          <div>
+          <div className="min-w-0 lg:py-1">
             <h2 id="delivery-heading" className="heading-section text-ink">
               Geleverd waar u het nodig heeft
             </h2>
-            <p className="text-body mt-3 text-muted md:mt-4">
-              Bestellingen worden geleverd op het opgegeven afleveradres. Beschikbaarheid en
-              levertijd kunnen per product en leverancier verschillen.
+            <p className="mt-3 text-[15px] leading-relaxed text-muted">
+              Wij leveren bestellingen in Nederland en België. {deliveryLabelFull()}.
             </p>
-            <div className="mt-6 sm:mt-7">
+            <p className="mt-3 font-heading text-[15px] font-semibold text-ink">
+              {freeShippingThresholdLabel()}
+            </p>
+            <div className="mt-5">
               <Button to="/bezorgen" variant="secondary">
                 Meer over levering
               </Button>

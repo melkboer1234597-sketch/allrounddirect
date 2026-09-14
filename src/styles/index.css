@@ -38,13 +38,13 @@
 
 @media (min-width: 1024px) {
   :root {
-    --space-section: 80px;
+    --space-section: 72px;
   }
 }
 
 @media (min-width: 1440px) {
   :root {
-    --space-section: 96px;
+    --space-section: 80px;
   }
 }
 
@@ -133,15 +133,6 @@ a {
 
 .section-space {
   padding-block: var(--space-section);
-}
-
-.logo-on-light {
-  mix-blend-mode: screen;
-  filter: brightness(0.72) contrast(1.45) saturate(1.2);
-}
-
-.logo-on-dark {
-  mix-blend-mode: screen;
 }
 
 .hide-scrollbar {

@@ -1,4 +1,5 @@
 import { SITE, canonicalUrl } from '@/config/site'
+import { assets } from '@/lib/assets'
 import type { StockStatus } from '@/types/catalog'
 
 export function organizationJsonLd() {
@@ -8,7 +9,7 @@ export function organizationJsonLd() {
     name: SITE.name,
     legalName: SITE.legalName,
     url: canonicalUrl('/'),
-    logo: canonicalUrl('/media/branding/allround-direct-logo-primary.png'),
+    logo: canonicalUrl(assets.logoPrimary),
     description: SITE.defaultDescription,
   }
 }
@@ -150,7 +151,7 @@ export function articleJsonLd(input: {
       name: SITE.name,
       logo: {
         '@type': 'ImageObject',
-        url: canonicalUrl('/media/branding/allround-direct-logo-primary.png'),
+        url: canonicalUrl(assets.logoPrimary),
       },
     },
     ...(input.datePublished ? { datePublished: input.datePublished } : {}),

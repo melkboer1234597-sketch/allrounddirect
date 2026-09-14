@@ -60,7 +60,7 @@ export function AdminLoginPage() {
         <img
           src={assets.logoHeader}
           alt="AllRound Direct"
-          className="logo-on-light mx-auto h-9 w-auto"
+          className="mx-auto h-9 w-auto object-contain"
         />
         <h1 className="mt-4 text-center font-heading text-[22px] font-semibold text-navy">
           Beheer

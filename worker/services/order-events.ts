@@ -1,10 +1,5 @@
-import { eq } from 'drizzle-orm'
-import type { EmailTemplateId } from '../../shared/email-templates'
 import type { OrderEventType } from '../../shared/order-events'
 import type { AppEnv } from '../types'
-import { createDb } from '../db'
-import { orderEventDeliveries, orders } from '../db/schema'
-import { newId } from '../lib/request'
 import { createEmailService } from './email'
 
 export type OrderEvent = {
@@ -15,63 +10,115 @@ export type OrderEvent = {
   data?: Record<string, string>
 }
 
-const EVENT_TEMPLATE: Partial<Record<OrderEventType, EmailTemplateId>> = {
-  ORDER_CREATED: 'order_received',
-  PAYMENT_CONFIRMED: 'payment_confirmed',
-  ORDER_PROCESSING: 'order_processing',
-  SHIPMENT_SENT: 'shipment_sent',
-  ORDER_DELIVERED: 'order_delivered',
-  ORDER_CANCELLED: 'order_cancelled',
-  RETURN_REQUESTED: 'return_requested',
-  RETURN_RECEIVED: 'return_received',
-  REFUND_COMPLETED: 'refund_processed',
-  BUSINESS_QUOTE_RECEIVED: 'business_quote_received',
-  BUSINESS_QUOTE_READY: 'business_quote_ready',
-}
-
+/**
+ * Event → e-mail.
+ *
+ * Bevestigingsbeleid (iDEAL/Bancontact):
+ * - Geen aparte “order ontvangen” + “betaling bevestigd” voor instant methods.
+ * - ORDER_CREATED stuurt alleen mail bij openstaande betaling (bijv. overboeking).
+ * - PAYMENT_CONFIRMED stuurt de rijke orderbevestiging (één mail).
+ *
+ * E-mailfouten blokkeren checkout/webhooks nooit.
+ */
 export async function emitOrderEvent(env: AppEnv['Bindings'], event: OrderEvent): Promise<void> {
-  const db = createDb(env)
-  const channel = 'email'
-  try {
-    await db.insert(orderEventDeliveries).values({
-      id: newId(),
-      eventType: event.type,
-      entityType: event.entityType,
-      entityId: event.entityId,
-      channel,
-      createdAt: new Date(),
-    })
-  } catch {
-    return
-  }
-
-  const template = EVENT_TEMPLATE[event.type]
-  if (!template) return
-
-  let to = event.data?.email
-  let orderNumber = event.data?.orderNumber
-  if (event.orderId) {
-    const order = (await db.select().from(orders).where(eq(orders.id, event.orderId)).limit(1))[0]
-    if (order) {
-      to = to ?? order.guestEmail
-      orderNumber = orderNumber ?? order.orderNumber
-    }
-  }
-  if (!to) return
-
   const email = createEmailService(env)
+  const orderId = event.orderId ?? (event.entityType === 'order' ? event.entityId : undefined)
+
   try {
-    await email.send({
-      template:
-        event.type === 'SHIPMENT_SENT' && event.data?.partial === 'true'
-          ? 'partial_shipment'
-          : template,
-      to,
-      data: { ...event.data, orderNumber: orderNumber ?? '' },
-      related: { type: event.entityType, id: event.entityId },
-    })
+    switch (event.type) {
+      case 'ORDER_CREATED': {
+        // Pending methods only (bank transfer / open payment). Instant methods wait for PAYMENT_CONFIRMED.
+        if (event.data?.awaitingPayment === 'true' && orderId) {
+          await email.sendOrderReceivedPending(orderId)
+        }
+        return
+      }
+      case 'PAYMENT_CONFIRMED': {
+        if (orderId) await email.sendOrderConfirmation(orderId)
+        return
+      }
+      case 'PAYMENT_FAILED': {
+        if (orderId) {
+          const paymentId = event.data?.paymentId
+          await email.sendPaymentFailed(orderId, paymentId)
+        }
+        return
+      }
+      case 'ORDER_PROCESSING':
+        // Covered by confirmation for most flows; avoid duplicate noise.
+        return
+      case 'SHIPMENT_SENT': {
+        if (orderId) {
+          await email.sendShipmentNotification({
+            orderId,
+            shipmentId: event.entityId,
+            partial: event.data?.partial === 'true',
+          })
+        }
+        return
+      }
+      case 'ORDER_DELIVERED': {
+        if (orderId) await email.sendDeliveryConfirmation(orderId)
+        return
+      }
+      case 'ORDER_CANCELLED': {
+        if (orderId) {
+          const refundCents = event.data?.refundAmountCents
+            ? Number(event.data.refundAmountCents)
+            : undefined
+          await email.sendCancelled(
+            orderId,
+            Number.isFinite(refundCents) ? refundCents : undefined,
+          )
+        }
+        return
+      }
+      case 'RETURN_REQUESTED': {
+        if (orderId) await email.sendReturnRequested(orderId)
+        return
+      }
+      case 'RETURN_RECEIVED': {
+        if (orderId) await email.sendReturnReceived(orderId)
+        return
+      }
+      case 'REFUND_COMPLETED': {
+        if (orderId) {
+          const refundCents = event.data?.refundAmountCents
+            ? Number(event.data.refundAmountCents)
+            : undefined
+          await email.sendRefundConfirmation(
+            orderId,
+            Number.isFinite(refundCents) ? refundCents : undefined,
+            event.data?.refundId,
+          )
+        }
+        return
+      }
+      case 'BUSINESS_QUOTE_RECEIVED': {
+        if (event.data?.email) {
+          await email.sendQuoteReceived({
+            to: event.data.email,
+            quoteId: event.entityId,
+          })
+        }
+        return
+      }
+      case 'BUSINESS_QUOTE_READY': {
+        if (event.data?.email) {
+          await email.send({
+            template: 'business_quote_ready',
+            to: event.data.email,
+            eventKey: `quote:${event.entityId}:ready`,
+            related: { type: 'quote', id: event.entityId },
+            data: event.data,
+          })
+        }
+        return
+      }
+      default:
+        return
+    }
   } catch (error) {
-    console.error('[events] e-mail voor', event.type, 'mislukt')
-    throw error
+    console.error('[events] e-mail voor', event.type, 'mislukt (niet-blokkerend)')
   }
 }

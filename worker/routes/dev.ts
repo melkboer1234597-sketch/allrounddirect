@@ -4,6 +4,7 @@ import { isDevelopment, isLocalHost } from '../lib/request'
 import { setDevMollieStatus } from '../services/mollie'
 import { placePendingOrder } from '../services/checkout'
 import { syncProviderPayment } from '../services/payment-sync'
+import { ingestCatalogPayload } from '../services/r2-catalog-import'
 import type { AppEnv } from '../types'
 
 export const devRoutes = new Hono<AppEnv>()
@@ -35,23 +36,26 @@ devRoutes.post('/orders/fixture', async (c) => {
     email: 'fixture@localhost',
     customerType: 'consumer',
     billing: {
-      name: 'Test Consument',
+      firstName: 'Test',
+      lastName: 'Consument',
       street: 'Voorbeeldstraat',
       houseNumber: '1',
-      postalCode: '1234AB',
+      postalCode: '1234 AB',
       city: 'Amsterdam',
       country: 'NL',
     },
     shipping: {
-      name: 'Test Consument',
+      firstName: 'Test',
+      lastName: 'Consument',
       street: 'Voorbeeldstraat',
       houseNumber: '1',
-      postalCode: '1234AB',
+      postalCode: '1234 AB',
       city: 'Amsterdam',
       country: 'NL',
     },
     lines: [{ slug: 'fixture-dev', quantity: 1 }],
-    shippingCents: 0,
+    paymentMethod: 'ideal',
+    idempotencyKey: `fixture-${Date.now()}`,
   })
   return c.json(result)
 })
@@ -64,4 +68,14 @@ devRoutes.post('/payments/:id/settle', async (c) => {
   const first = await syncProviderPayment(c.env, id)
   const second = await syncProviderPayment(c.env, id)
   return c.json({ first, second, idempotent: second.duplicate === true })
+})
+
+devRoutes.post('/catalog-ingest', async (c) => {
+  if (!guardDev(c)) return c.json({ error: 'Not found' }, 404)
+  let last: Awaited<ReturnType<typeof ingestCatalogPayload>> | null = null
+  for (let i = 0; i < 2; i += 1) {
+    last = await ingestCatalogPayload(c.env)
+    if (!last.ok || last.done) break
+  }
+  return c.json(last)
 })

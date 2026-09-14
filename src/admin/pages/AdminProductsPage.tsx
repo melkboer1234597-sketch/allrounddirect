@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SeoHead } from '@/components/seo/SeoHead'
 import { Button } from '@/components/ui/Button'
 import { adminFetch, formatCents } from '@/lib/admin-api'
+import { deliveryLabelShort } from '../../../shared/commerce'
 
 type Row = {
   id: string
@@ -83,7 +84,13 @@ export function AdminProductsPage() {
         robots="noindex,nofollow"
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-heading text-[24px] font-semibold text-navy">Producten</h1>
+        <div>
+          <h1 className="font-heading text-[24px] font-semibold text-navy">Producten</h1>
+          <p className="mt-1 text-[13px] text-muted">
+            Standaard levering op de webshop: {deliveryLabelShort()}. Bronvelden overrulen dit niet
+            zonder expliciete override.
+          </p>
+        </div>
         <Button to="/scotdejewish/products/new">Nieuw product</Button>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

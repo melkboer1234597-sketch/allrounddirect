@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { CATALOG_ROOT_SLUGS } from '@/data/taxonomy'
 import { RootLayout } from '@/layouts/RootLayout'
+import { CheckoutLayout } from '@/layouts/CheckoutLayout'
 import { HomePage } from '@/pages/HomePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProductPage } from '@/pages/ProductPage'
@@ -55,6 +56,7 @@ import { AdminLoginPage } from '@/admin/pages/AdminLoginPage'
 import { AdminDashboardPage } from '@/admin/pages/AdminDashboardPage'
 import { AdminProductsPage } from '@/admin/pages/AdminProductsPage'
 import { AdminProductEditorPage } from '@/admin/pages/AdminProductEditorPage'
+import { AdminQualityPage } from '@/admin/pages/AdminQualityPage'
 import { AdviesHubPage } from '@/pages/advies/AdviesHubPage'
 import { AdviesArticlePage } from '@/pages/advies/AdviesArticlePage'
 import {
@@ -77,6 +79,7 @@ import {
   AdminSuppliersPage,
   AdminUsersPage,
 } from '@/admin/pages/AdminResources'
+import { AdminEmailPreviewPage } from '@/admin/pages/AdminEmailPreviewPage'
 
 export function App() {
   return (
@@ -89,6 +92,7 @@ export function App() {
           <Route path="scotdejewish/orders" element={<AdminOrdersPage />} />
           <Route path="scotdejewish/orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="scotdejewish/products" element={<AdminProductsPage />} />
+          <Route path="scotdejewish/quality" element={<AdminQualityPage />} />
           <Route path="scotdejewish/products/new" element={<AdminProductEditorPage />} />
           <Route path="scotdejewish/products/:id" element={<AdminProductEditorPage />} />
           <Route path="scotdejewish/categories" element={<AdminCategoriesPage />} />
@@ -104,9 +108,13 @@ export function App() {
           <Route path="scotdejewish/imports" element={<AdminImportsPage />} />
           <Route path="scotdejewish/seo" element={<AdminSeoPage />} />
           <Route path="scotdejewish/settings" element={<AdminSettingsPage />} />
+          <Route path="scotdejewish/email-preview" element={<AdminEmailPreviewPage />} />
           <Route path="scotdejewish/users" element={<AdminUsersPage />} />
           <Route path="scotdejewish/audit-log" element={<AdminAuditPage />} />
         </Route>
+      </Route>
+      <Route element={<CheckoutLayout />}>
+        <Route path="afrekenen" element={<CheckoutPage />} />
       </Route>
       <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
@@ -115,7 +123,6 @@ export function App() {
         <Route path="favorieten" element={<FavoritesPage />} />
         <Route path="bestelling-volgen" element={<GuestOrderPage />} />
         <Route path="winkelwagen" element={<CartPage />} />
-        <Route path="afrekenen" element={<CheckoutPage />} />
         <Route path="bestelling/bevestiging" element={<OrderConfirmationPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="privacy" element={<LegalPrivacyPage />} />

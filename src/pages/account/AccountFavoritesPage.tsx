@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { SeoHead } from '@/components/seo/SeoHead'
-import { ProductCard } from '@/components/ui/ProductCard'
+import { ProductGrid } from '@/components/catalog/ProductGrid'
 import { getWishlist } from '@/lib/account-api'
 import { getProductBySlug } from '@/services/catalog'
-import { useQueries } from '@tanstack/react-query'
+import type { CatalogProduct } from '@/types/catalog'
 
 export function AccountFavoritesPage() {
   const list = useQuery({ queryKey: ['account', 'wishlist'], queryFn: getWishlist })
@@ -15,6 +15,9 @@ export function AccountFavoritesPage() {
       queryFn: () => getProductBySlug(slug),
     })),
   })
+  const found = products
+    .map((query) => query.data)
+    .filter((item): item is CatalogProduct => Boolean(item))
 
   return (
     <>
@@ -39,10 +42,8 @@ export function AccountFavoritesPage() {
           </Link>
         </p>
       ) : (
-        <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {products.map((query, index) =>
-            query.data ? <ProductCard key={slugs[index]} product={query.data} /> : null,
-          )}
+        <div className="mt-4">
+          <ProductGrid products={found} />
         </div>
       )}
     </>

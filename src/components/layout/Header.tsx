@@ -50,11 +50,11 @@ export function Header() {
             <Menu className="h-5 w-5" strokeWidth={1.6} />
           </IconButton>
 
-          <Link to="/" className="flex min-w-0 shrink items-center isolate bg-white">
+          <Link to="/" className="flex min-w-0 shrink items-center">
             <img
               src={assets.logoHeader}
               alt="AllRound Direct"
-              className="logo-on-light h-7 w-auto max-w-[148px] object-contain min-[375px]:h-8 min-[375px]:max-w-[176px] sm:max-w-[200px] lg:h-10 lg:max-w-[236px]"
+              className="h-7 w-auto max-w-[148px] object-contain min-[375px]:h-8 min-[375px]:max-w-[176px] sm:max-w-[200px] lg:h-10 lg:max-w-[236px]"
             />
           </Link>
 

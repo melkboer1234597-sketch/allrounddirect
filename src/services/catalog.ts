@@ -6,6 +6,7 @@ import { DEMO_FEATURED_PRODUCTS } from '@/data/demo-products'
 import { FILTER_SCHEMAS } from '@/data/filter-schemas'
 import { apiFetch } from '@/lib/api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/catalog-url'
+import { filterSchemaForCategory } from '@/lib/product-presentation'
 import { CATALOG_TAXONOMY } from '@/data/taxonomy'
 import type {
   CatalogProduct,
@@ -156,8 +157,7 @@ export async function queryCatalog(query: CatalogQuery): Promise<CatalogQueryRes
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   const page = query.page ?? 1
   const start = (page - 1) * pageSize
-  const schemaId =
-    CATALOG_TAXONOMY.find((item) => item.slug === query.categorySlug)?.filterSchema ?? 'generic'
+  const schemaId = filterSchemaForCategory(query.categorySlug, query.subcategorySlug)
 
   return {
     items: sorted.slice(start, start + pageSize),
@@ -178,8 +178,19 @@ export async function getFeaturedProducts(): Promise<CatalogProduct[]> {
       /* demo fallback */
     }
   }
-  const featured = DEMO_CATALOG.filter((item) => item.isFeatured).slice(0, 8)
-  return featured.length ? featured : DEMO_FEATURED_PRODUCTS
+  const featured = DEMO_CATALOG.filter((item) => item.isFeatured)
+  if (featured.length >= 4) {
+    const diverse: typeof featured = []
+    const seen = new Set<string>()
+    for (const item of featured) {
+      if (seen.has(item.categorySlug)) continue
+      seen.add(item.categorySlug)
+      diverse.push(item)
+      if (diverse.length >= 5) break
+    }
+    return diverse.length ? diverse : featured.slice(0, 5)
+  }
+  return featured.length ? featured.slice(0, 5) : DEMO_FEATURED_PRODUCTS.slice(0, 5)
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
@@ -195,6 +206,27 @@ export async function getProductBySlug(slug: string): Promise<CatalogProduct | n
     DEMO_FEATURED_PRODUCTS.find((item) => item.slug === slug) ??
     null
   )
+}
+
+export async function getRelatedProducts(slug: string): Promise<CatalogProduct[]> {
+  if (USE_LIVE_API) {
+    try {
+      const live = await apiFetch<{ items: CatalogProduct[] }>(
+        `/products/${encodeURIComponent(slug)}/related`,
+      )
+      return live.items
+    } catch {
+      /* demo fallback */
+    }
+  }
+  const current = await getProductBySlug(slug)
+  if (!current) return []
+  return DEMO_CATALOG.filter(
+    (item) =>
+      item.slug !== slug &&
+      item.categorySlug === current.categorySlug &&
+      item.images.length > 0,
+  ).slice(0, 4)
 }
 
 export async function suggestSearch(q: string): Promise<{

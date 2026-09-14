@@ -12,25 +12,39 @@ export type CartLine = {
 
 const KEY = 'allround-cart-v1'
 const EVENT = 'allround-cart-change'
+const EMPTY: CartLine[] = []
+
+let cachedRaw: string | null = null
+let cachedLines: CartLine[] = EMPTY
 
 function emit() {
   window.dispatchEvent(new Event(EVENT))
 }
 
 export function readCart(): CartLine[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return EMPTY
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return []
+    if (raw === cachedRaw) return cachedLines
+    cachedRaw = raw
+    if (!raw) {
+      cachedLines = EMPTY
+      return cachedLines
+    }
     const parsed = JSON.parse(raw) as CartLine[]
-    return Array.isArray(parsed) ? parsed : []
+    cachedLines = Array.isArray(parsed) ? parsed : EMPTY
+    return cachedLines
   } catch {
-    return []
+    cachedLines = EMPTY
+    return EMPTY
   }
 }
 
 function writeCart(lines: CartLine[]) {
-  localStorage.setItem(KEY, JSON.stringify(lines))
+  const raw = JSON.stringify(lines)
+  localStorage.setItem(KEY, raw)
+  cachedRaw = raw
+  cachedLines = lines
   emit()
 }
 
@@ -79,8 +93,12 @@ function subscribe(onChange: () => void) {
   }
 }
 
+export function clearCart() {
+  writeCart([])
+}
+
 export function useCart() {
-  const lines = useSyncExternalStore(subscribe, readCart, () => [])
+  const lines = useSyncExternalStore(subscribe, readCart, () => EMPTY)
   return {
     lines,
     count: cartCount(lines),

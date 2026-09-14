@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { createDb } from '../db'
 import {
@@ -7,6 +7,7 @@ import {
   addresses,
   customerProfiles,
   orderItems,
+  orderStatusHistory,
   orders,
   shipmentItems,
   shipments,
@@ -21,6 +22,8 @@ import {
   isOrderStatus,
   isShipmentStatus,
 } from '../../shared/order-status'
+import { canAccessOrderDetail } from '../../shared/order-access'
+import { buildOrderTimeline } from '../../shared/order-timeline'
 import type { AppEnv } from '../types'
 
 export const accountRoutes = new Hono<AppEnv>()
@@ -351,26 +354,50 @@ export async function loadOrderDetail(
   orderNumber: string,
   userId: string | null,
   guestEmail: string | null,
+  confirmationToken?: string | null,
 ) {
   const db = createDb(env)
   const found = await db.select().from(orders).where(eq(orders.orderNumber, orderNumber)).limit(1)
   const order = found[0]
   if (!order) return null
-  if (userId && order.userId !== userId) return null
-  if (guestEmail && order.guestEmail.trim().toLowerCase() !== guestEmail.trim().toLowerCase()) {
+
+  if (
+    !canAccessOrderDetail({
+      orderUserId: order.userId,
+      orderGuestEmail: order.guestEmail,
+      orderConfirmationToken: order.confirmationToken,
+      requesterUserId: userId,
+      requesterEmail: guestEmail,
+      confirmationToken,
+    })
+  ) {
     return null
   }
 
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id))
   const shipmentRows = await db.select().from(shipments).where(eq(shipments.orderId, order.id))
   const links = await db.select().from(shipmentItems)
+  const history = await db
+    .select()
+    .from(orderStatusHistory)
+    .where(eq(orderStatusHistory.orderId, order.id))
+    .orderBy(asc(orderStatusHistory.createdAt))
+
+  const timeline = buildOrderTimeline({
+    status: order.status,
+    placedAt: order.placedAt,
+    paidAt: order.paidAt,
+    history: history.map((row) => ({ toStatus: row.toStatus, createdAt: row.createdAt })),
+  })
 
   return {
     orderNumber: order.orderNumber,
     placedAt: order.placedAt,
     status: order.status,
     statusLabel: isOrderStatus(order.status) ? ORDER_STATUS_LABELS[order.status] : order.status,
+    paymentStatus: order.paymentStatus,
     paymentMethod: order.paymentMethod,
+    email: order.guestEmail,
     currency: order.currency,
     subtotalCents: order.subtotalCents,
     vatCents: order.vatCents,
@@ -378,13 +405,16 @@ export async function loadOrderDetail(
     totalCents: order.totalCents,
     billing: JSON.parse(order.billingSnapshot) as Record<string, string>,
     shipping: JSON.parse(order.shippingSnapshot) as Record<string, string>,
+    timeline,
     items: items.map((item) => ({
       id: item.id,
       name: item.name,
       sku: item.sku,
       quantity: item.quantity,
       unitPriceCents: item.unitPriceCents,
+      lineTotalCents: item.lineTotalCents,
       vatRate: item.vatRate,
+      imageRef: item.imageRef,
     })),
     shipments: shipmentRows.map((shipment, index) => ({
       id: shipment.id,

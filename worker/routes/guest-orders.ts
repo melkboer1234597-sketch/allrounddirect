@@ -39,3 +39,24 @@ guestOrderRoutes.post('/lookup', async (c) => {
   if (!detail) return c.json({ error: GENERIC }, 404)
   return c.json(detail)
 })
+
+/** Secure guest access via order number + confirmation token (non-guessable). */
+guestOrderRoutes.get('/access', async (c) => {
+  const orderNumber = c.req.query('order')?.trim()
+  const token = c.req.query('token')?.trim()
+  if (!orderNumber || !token || token.length < 8) {
+    return c.json({ error: 'Onvolledige toegangslink.' }, 400)
+  }
+
+  const db = createDb(c.env)
+  const ip = getClientIp(c.req.raw)
+  const tokenHash = await sha256Hex(token)
+  const limited = await enforceRateLimit(db, `guest-access:${ip}:${tokenHash}`, 30, 15 * 60 * 1000)
+  if (!limited.ok) {
+    return c.json({ error: 'Te veel verzoeken. Probeer het later opnieuw.' }, 429)
+  }
+
+  const detail = await loadOrderDetail(c.env, orderNumber, null, null, token)
+  if (!detail) return c.json({ error: 'Bestelling niet gevonden.' }, 404)
+  return c.json(detail)
+})

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SeoHead } from '@/components/seo/SeoHead'
 import { Container } from '@/components/ui/Container'
-import { ProductCard } from '@/components/ui/ProductCard'
+import { ProductGrid } from '@/components/catalog/ProductGrid'
 import { useAuthSession } from '@/hooks/useAccount'
 import { readGuestWishlist } from '@/lib/guest-wishlist'
 import { getProductBySlug } from '@/services/catalog'
@@ -50,10 +50,10 @@ export function FavoritesPage() {
             </Link>
           </p>
         ) : (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {found.map((product) =>
-              product ? <ProductCard key={product.id} product={product} /> : null,
-            )}
+          <div className="mt-6">
+            <ProductGrid
+              products={found.filter((product): product is NonNullable<typeof product> => Boolean(product))}
+            />
           </div>
         )}
       </Container>

@@ -1,43 +1,217 @@
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
+import {
+  CHECKOUT_COUNTRIES,
+  CHECKOUT_COUNTRY_LABELS,
+  checkoutLocale,
+  isCheckoutCountry,
+  isValidPostalCode,
+} from '../../shared/checkout'
+import { resolveCheckoutCountry } from '../../shared/geo-country'
+import { canRetryPayment, paymentUiState } from '../../shared/payment-ui'
+import { getSession } from '../auth/session'
 import { createDb } from '../db'
-import { orders, payments } from '../db/schema'
+import { addresses, customerProfiles, orders, payments } from '../db/schema'
 import { enforceRateLimit } from '../lib/rate-limit'
 import { getClientIp } from '../lib/request'
-import { MollieConfigError } from '../services/mollie'
-import { placePendingOrder } from '../services/checkout'
+import { deliveryMethodsForCountry } from '../services/delivery'
+import {
+  placePendingOrder,
+  quoteCheckout,
+  retryOrderPayment,
+  type CheckoutAddress,
+} from '../services/checkout'
+import {
+  createPaymentsService,
+  MollieConfigError,
+  mollieEnvironmentLabel,
+} from '../services/mollie'
 import { syncProviderPayment } from '../services/payment-sync'
 import type { AppEnv } from '../types'
 
 export const checkoutRoutes = new Hono<AppEnv>()
 
-const address = z.object({
-  name: z.string().trim().min(2).max(120),
-  street: z.string().trim().min(1).max(120),
-  houseNumber: z.string().trim().min(1).max(20),
-  postalCode: z.string().trim().min(4).max(12),
-  city: z.string().trim().min(1).max(80),
-  country: z.string().trim().min(2).max(2).default('NL'),
-  company: z.string().trim().max(120).optional(),
-})
+const addressSchema = z
+  .object({
+    firstName: z.string().trim().min(1).max(60),
+    lastName: z.string().trim().min(1).max(60),
+    street: z.string().trim().min(1).max(120),
+    houseNumber: z.string().trim().min(1).max(20),
+    houseAddition: z.string().trim().max(20).optional(),
+    postalCode: z.string().trim().min(4).max(12),
+    city: z.string().trim().min(1).max(80),
+    country: z.enum(CHECKOUT_COUNTRIES),
+    company: z.string().trim().max(120).optional(),
+    phone: z.string().trim().max(30).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!isValidPostalCode(value.country, value.postalCode)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['postalCode'],
+        message:
+          value.country === 'NL'
+            ? 'Gebruik een Nederlandse postcode (bijv. 1234 AB).'
+            : 'Gebruik een Belgische postcode (4 cijfers).',
+      })
+    }
+  })
 
-const placeSchema = z.object({
-  email: z.string().trim().email(),
-  customerType: z.enum(['consumer', 'business']).default('consumer'),
-  billing: address,
-  shipping: address,
-  lines: z
-    .array(
-      z.object({
+const linesSchema = z
+  .array(
+    z
+      .object({
         productId: z.string().optional(),
         slug: z.string().optional(),
         quantity: z.number().int().min(1).max(99),
-      }),
-    )
-    .min(1)
-    .max(50),
-  shippingCents: z.number().int().min(0).max(1_000_000).optional(),
+      })
+      .strict(),
+  )
+  .min(1)
+  .max(50)
+
+const placeSchema = z.object({
+  email: z.string().trim().email(),
+  phone: z.string().trim().min(8).max(30).optional(),
+  customerType: z.enum(['consumer', 'business']).default('consumer'),
+  billing: addressSchema,
+  shipping: addressSchema,
+  lines: linesSchema,
+  deliveryMethodId: z.string().optional(),
+  paymentMethod: z.string().trim().min(1).max(40).optional(),
+  locale: z.enum(['nl_NL', 'nl_BE', 'fr_BE']).optional(),
+  idempotencyKey: z.string().trim().min(8).max(80).optional(),
+  acceptedTerms: z.literal(true),
+})
+
+const quoteSchema = z.object({
+  lines: linesSchema,
+  country: z.enum(CHECKOUT_COUNTRIES).default('NL'),
+  deliveryMethodId: z.string().optional(),
+})
+
+checkoutRoutes.get('/context', async (c) => {  const cfCountry = (c.req.raw as Request & { cf?: { country?: string } }).cf?.country
+  const resolved = resolveCheckoutCountry(cfCountry, c.req.query('country'))
+  const suggestedCountry = resolved.suggested
+  const country = resolved.country
+  const amountCents = Math.max(100, Number(c.req.query('amountCents') ?? '10000') || 10000)
+  const locale = checkoutLocale(country)
+  const mollie = mollieEnvironmentLabel(c.env)
+
+  let methods: Array<{
+    id: string
+    description: string
+    image: { size1x?: string; size2x?: string; svg?: string }
+  }> = []
+  try {
+    methods = await createPaymentsService(c.env).listMethods({
+      amountCents,
+      country,
+      locale,
+      currency: 'EUR',
+    })
+  } catch {
+    methods = []
+  }
+
+  const session = await getSession(c)
+  let prefill: {
+    email?: string
+    firstName?: string
+    lastName?: string
+    phone?: string
+    shipping?: unknown
+    billing?: unknown
+  } | null = null
+
+  if (session?.user) {
+    const db = createDb(c.env)
+    const profile = (
+      await db
+        .select()
+        .from(customerProfiles)
+        .where(eq(customerProfiles.userId, session.user.id))
+        .limit(1)
+    )[0]
+    const saved = await db
+      .select()
+      .from(addresses)
+      .where(eq(addresses.userId, session.user.id))
+    const ship = saved.find((a) => a.isDefaultShipping) ?? saved[0]
+    const bill = saved.find((a) => a.isDefaultBilling) ?? ship
+    prefill = {
+      email: session.user.email,
+      firstName: profile?.firstName ?? undefined,
+      lastName: profile?.lastName ?? undefined,
+      phone: profile?.phone ?? undefined,
+      shipping: ship
+        ? {
+            firstName: ship.firstName,
+            lastName: ship.lastName,
+            street: ship.street,
+            houseNumber: ship.houseNumber,
+            houseAddition: ship.addition ?? undefined,
+            postalCode: ship.postalCode,
+            city: ship.city,
+            country: isCheckoutCountry(ship.country) ? ship.country : 'NL',
+            company: ship.companyName ?? undefined,
+            phone: ship.phone ?? undefined,
+          }
+        : undefined,
+      billing: bill
+        ? {
+            firstName: bill.firstName,
+            lastName: bill.lastName,
+            street: bill.street,
+            houseNumber: bill.houseNumber,
+            houseAddition: bill.addition ?? undefined,
+            postalCode: bill.postalCode,
+            city: bill.city,
+            country: isCheckoutCountry(bill.country) ? bill.country : 'NL',
+            company: bill.companyName ?? undefined,
+            phone: bill.phone ?? undefined,
+          }
+        : undefined,
+    }
+  }
+
+  return c.json({
+    suggestedCountry,
+    country,
+    countries: CHECKOUT_COUNTRIES.map((code) => ({
+      code,
+      label: CHECKOUT_COUNTRY_LABELS[code],
+    })),
+    locale,
+    deliveryMethods: deliveryMethodsForCountry(country).map((method) => ({
+      id: method.id,
+      label: method.label,
+      description: method.description,
+      amountCents: method.amountCents,
+      priceKnown: method.amountCents != null,
+    })),
+    paymentMethods: methods,
+    mollie: {
+      label: mollie.label,
+      mode: mollie.mode,
+      configured: mollie.configured,
+    },
+    prefill,
+    loggedIn: Boolean(session?.user),
+  })
+})
+
+checkoutRoutes.post('/quote', async (c) => {
+  const parsed = quoteSchema.safeParse(await c.req.json())
+  if (!parsed.success) return c.json({ error: 'Controleer de winkelwagen.' }, 400)
+  try {
+    const quote = await quoteCheckout(c.env, parsed.data)
+    return c.json(quote)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Offerte mislukt.'
+    return c.json({ error: message }, 400)
+  }
 })
 
 checkoutRoutes.post('/place', async (c) => {
@@ -47,12 +221,23 @@ checkoutRoutes.post('/place', async (c) => {
   if (!limited.ok) return c.json({ error: 'Te veel verzoeken. Probeer het later opnieuw.' }, 429)
 
   const parsed = placeSchema.safeParse(await c.req.json())
-  if (!parsed.success) return c.json({ error: 'Controleer de bestelgegevens.' }, 400)
+  if (!parsed.success) {
+    return c.json(
+      {
+        error: 'Controleer de bestelgegevens.',
+        details: parsed.error.flatten(),
+      },
+      400,
+    )
+  }
 
+  const session = await getSession(c)
   try {
     const result = await placePendingOrder(c.env, {
       ...parsed.data,
-      userId: null,
+      billing: parsed.data.billing as CheckoutAddress,
+      shipping: parsed.data.shipping as CheckoutAddress,
+      userId: session?.user?.id ?? null,
     })
     return c.json({
       orderId: result.orderId,
@@ -61,6 +246,7 @@ checkoutRoutes.post('/place', async (c) => {
       checkoutUrl: result.checkoutUrl,
       mockPayment: result.mock,
       mode: result.mode,
+      reused: result.reused,
     })
   } catch (error) {
     if (error instanceof MollieConfigError) {
@@ -70,6 +256,42 @@ checkoutRoutes.post('/place', async (c) => {
     return c.json({ error: message }, 400)
   }
 })
+
+checkoutRoutes.post('/retry-payment', async (c) => {
+  const ip = getClientIp(c.req.raw)
+  const db = createDb(c.env)
+  const limited = await enforceRateLimit(db, `checkout-retry:${ip}`, 10, 15 * 60 * 1000)
+  if (!limited.ok) return c.json({ error: 'Te veel verzoeken.' }, 429)
+
+  const body = z
+    .object({
+      orderNumber: z.string().min(3),
+      confirmationToken: z.string().min(8),
+      paymentMethod: z.string().optional(),
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Onvolledige aanvraag.' }, 400)
+
+  try {
+    const result = await retryOrderPayment(c.env, body.data)
+    return c.json(result)
+  } catch (error) {
+    if (error instanceof MollieConfigError) {
+      return c.json({ error: error.message }, 503)
+    }
+    const message = error instanceof Error ? error.message : 'Opnieuw betalen mislukt.'
+    return c.json({ error: message }, 400)
+  }
+})
+
+function formatShippingLines(snapshot: Record<string, string>) {
+  const street = [snapshot.street, snapshot.houseNumber, snapshot.houseAddition]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+  const cityLine = `${snapshot.postalCode ?? ''} ${snapshot.city ?? ''}`.trim()
+  return [snapshot.name, snapshot.company, street, cityLine, snapshot.country].filter(Boolean)
+}
 
 checkoutRoutes.get('/status', async (c) => {
   const orderNumber = c.req.query('order')
@@ -83,7 +305,12 @@ checkoutRoutes.get('/status', async (c) => {
     return c.json({ error: 'Bestelling niet gevonden.' }, 404)
   }
   const payment = (
-    await db.select().from(payments).where(eq(payments.orderId, order.id)).limit(1)
+    await db
+      .select()
+      .from(payments)
+      .where(eq(payments.orderId, order.id))
+      .orderBy(desc(payments.createdAt))
+      .limit(1)
   )[0]
   if (payment) {
     try {
@@ -93,11 +320,32 @@ checkoutRoutes.get('/status', async (c) => {
     }
   }
   const fresh = (await db.select().from(orders).where(eq(orders.id, order.id)).limit(1))[0]
+  if (!fresh) return c.json({ error: 'Bestelling niet gevonden.' }, 404)
+
+  const paymentStatus = fresh.paymentStatus
+  const uiState = paymentUiState(paymentStatus)
+  const canRetry = canRetryPayment({
+    orderStatus: fresh.status,
+    paymentStatus,
+  })
+
+  const shipping = JSON.parse(fresh.shippingSnapshot) as Record<string, string>
+  const paymentMethod = payment?.method || fresh.paymentMethod
+
   return c.json({
-    orderNumber: fresh?.orderNumber,
-    status: fresh?.status,
-    paymentStatus: fresh?.paymentStatus,
-    totalCents: fresh?.totalCents,
-    currency: fresh?.currency,
+    orderNumber: fresh.orderNumber,
+    status: fresh.status,
+    paymentStatus,
+    uiState,
+    paymentMethod,
+    totalCents: fresh.totalCents,
+    currency: fresh.currency,
+    shippingCountry: fresh.shippingCountry,
+    email: fresh.guestEmail,
+    shippingAddress: formatShippingLines(shipping),
+    estimatedDelivery: null,
+    hasAccount: Boolean(fresh.userId),
+    canRetry,
+    paidAt: fresh.paidAt,
   })
 })

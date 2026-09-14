@@ -63,7 +63,7 @@ export function AboutPage() {
       sections={[
         {
           heading: 'Wat u van ons kunt verwachten',
-          body: 'Het assortiment komt van geselecteerde leveranciers. Prijs, voorraad en levertijd staan per product. We beloven geen next-day levering voor de hele shop.',
+          body: 'Het assortiment komt van geselecteerde leveranciers. Standaard levering is binnen 1 tot 3 werkdagen in Nederland en België; gratis verzending vanaf €999. We beloven geen next-day levering voor de hele shop.',
         },
         {
           heading: 'Montage',

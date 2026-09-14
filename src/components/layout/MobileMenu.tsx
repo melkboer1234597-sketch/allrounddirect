@@ -75,11 +75,11 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
         inert={open ? undefined : true}
       >
         <div className="flex h-14 items-center justify-between border-b border-line px-3">
-          <Link to="/" onClick={onClose} className="flex items-center isolate bg-white pl-1">
+          <Link to="/" onClick={onClose} className="flex items-center pl-1">
             <img
               src={assets.logoHeader}
               alt="AllRound Direct"
-              className="logo-on-light h-8 w-auto max-w-[180px] object-contain"
+              className="h-8 w-auto max-w-[180px] object-contain"
             />
             <span id={titleId} className="sr-only">
               Menu

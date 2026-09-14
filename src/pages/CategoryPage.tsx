@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Container } from '@/components/ui/Container'
 import { SITE } from '@/config/site'
 import { findCategoryByPath, taxonomyDescendantSlugs } from '@/data/taxonomy'
+import { filterSchemaForCategory } from '@/lib/product-presentation'
 import { catalogCanonicalPath, hasUncuratedFacetParams } from '@/lib/catalog-url'
 import { breadcrumbListJsonLd, collectionPageJsonLd } from '@/lib/seo'
 import { SEO_REDIRECTS } from '../../shared/redirects'
@@ -32,7 +33,9 @@ export function CategoryPage() {
   const intro =
     active?.intro ?? root?.intro ?? 'Bekijk het volledige assortiment van AllRound Direct.'
   const description = active?.intro ?? root?.seoDescription ?? intro
-  const schemaId = root?.filterSchema ?? 'generic'
+  const schemaId = root
+    ? filterSchemaForCategory(root.slug, active?.slug)
+    : 'generic'
   const body = active?.content ?? root?.content
   const childLinks = found.leaf
     ? []

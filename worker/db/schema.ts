@@ -209,6 +209,10 @@ export const orders = sqliteTable(
     paymentStatus: text('payment_status').notNull().default('pending'),
     molliePaymentId: text('mollie_payment_id'),
     confirmationToken: text('confirmation_token').notNull().default(''),
+    guestPhone: text('guest_phone'),
+    shippingCountry: text('shipping_country').notNull().default('NL'),
+    discountCents: integer('discount_cents').notNull().default(0),
+    idempotencyKey: text('idempotency_key'),
     inventoryAdjustedAt: integer('inventory_adjusted_at', { mode: 'timestamp_ms' }),
     paidAt: integer('paid_at', { mode: 'timestamp_ms' }),
     internalNotes: text('internal_notes'),
@@ -221,6 +225,7 @@ export const orders = sqliteTable(
   (table) => [
     index('orders_userId_idx').on(table.userId),
     index('orders_guestEmail_idx').on(table.guestEmail),
+    uniqueIndex('orders_idempotency_key_uidx').on(table.idempotencyKey),
   ],
 )
 
@@ -293,18 +298,29 @@ export const orderNotes = sqliteTable('order_notes', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 })
 
-export const refunds = sqliteTable('refunds', {
-  id: text('id').primaryKey(),
-  orderId: text('order_id')
-    .notNull()
-    .references(() => orders.id, { onDelete: 'cascade' }),
-  paymentId: text('payment_id'),
-  providerRefundId: text('provider_refund_id'),
-  amountCents: integer('amount_cents').notNull(),
-  reason: text('reason'),
-  status: text('status').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-})
+export const refunds = sqliteTable(
+  'refunds',
+  {
+    id: text('id').primaryKey(),
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    paymentId: text('payment_id'),
+    providerRefundId: text('provider_refund_id'),
+    amountCents: integer('amount_cents').notNull(),
+    reason: text('reason'),
+    status: text('status').notNull(),
+    requestedByAdmin: text('requested_by_admin'),
+    idempotencyKey: text('idempotency_key'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+  },
+  (table) => [
+    index('refunds_order_idx').on(table.orderId),
+    uniqueIndex('refunds_idempotency_key_uidx').on(table.idempotencyKey),
+    uniqueIndex('refunds_provider_refund_id_uidx').on(table.providerRefundId),
+  ],
+)
 
 export const brands = sqliteTable('brands', {
   id: text('id').primaryKey(),
@@ -393,6 +409,11 @@ export const products = sqliteTable(
     sourceProductId: text('source_product_id'),
     sourceRightsStatus: text('source_rights_status').default('needs_review'),
     currency: text('currency').default('EUR'),
+    originalSourceName: text('original_source_name'),
+    priceOnRequest: integer('price_on_request', { mode: 'boolean' }).default(false).notNull(),
+    reviewStatus: text('review_status').default('ok').notNull(),
+    qualityFlags: text('quality_flags').default('[]').notNull(),
+    isFeatured: integer('is_featured', { mode: 'boolean' }).default(false).notNull(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   },
@@ -401,6 +422,7 @@ export const products = sqliteTable(
     index('products_sku_idx').on(table.sku),
     index('products_category_idx').on(table.categoryId),
     index('products_brand_idx').on(table.brandId),
+    index('products_review_status_idx').on(table.reviewStatus),
     uniqueIndex('products_source_url_uidx').on(table.sourceUrl),
   ],
 )
@@ -423,11 +445,13 @@ export const productImages = sqliteTable(
     mimeType: text('mime_type'),
     fileSize: integer('file_size'),
     contentHash: text('content_hash'),
+    imageStatus: text('image_status').default('ok').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }),
   },
   (table) => [
     index('product_images_product_idx').on(table.productId),
     index('product_images_hash_idx').on(table.contentHash),
+    index('product_images_status_idx').on(table.imageStatus),
   ],
 )
 
@@ -758,6 +782,7 @@ export const emailLogs = sqliteTable(
     recipient: text('recipient').notNull(),
     relatedEntityType: text('related_entity_type'),
     relatedEntityId: text('related_entity_id'),
+    eventKey: text('event_key'),
     status: text('status').notNull(),
     providerMessageId: text('provider_message_id'),
     errorCode: text('error_code'),
@@ -765,6 +790,27 @@ export const emailLogs = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   },
   (table) => [index('email_logs_created_idx').on(table.createdAt)],
+)
+
+/** Idempotente e-mailgebeurtenissen (webhook-veilig). */
+export const emailEvents = sqliteTable(
+  'email_events',
+  {
+    id: text('id').primaryKey(),
+    eventKey: text('event_key').notNull().unique(),
+    template: text('template').notNull(),
+    orderId: text('order_id'),
+    recipient: text('recipient').notNull(),
+    status: text('status').notNull(),
+    providerMessageId: text('provider_message_id'),
+    errorCode: text('error_code'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    sentAt: integer('sent_at', { mode: 'timestamp_ms' }),
+  },
+  (table) => [
+    index('email_events_order_idx').on(table.orderId),
+    index('email_events_created_idx').on(table.createdAt),
+  ],
 )
 
 /** Alleen development: nagebootste Mollie-betalingen, nooit live. */

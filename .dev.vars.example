@@ -1,17 +1,8 @@
-# Lokale secrets voor Wrangler (niet committen)
-# Kopieer naar .dev.vars en vul waarden in.
-
-MOLLIE_API_KEY=
+# Local Worker overrides (never commit real secrets)
+ENVIRONMENT=development
+BETTER_AUTH_URL=http://localhost:5173
+SITE_URL=http://localhost:5173
+PUBLIC_SITE_URL=http://localhost:5173
 MOLLIE_MODE=test
 MOLLIE_ALLOW_LIVE=false
-ADMIN_SESSION_SECRET=dev-session-secret-change-me
-
-# Minimaal 32 tekens. Vervang dit in elke omgeving.
-BETTER_AUTH_SECRET=dev-better-auth-secret-change-me-32ch
-
-# Turnstile: leeg = development fallback (nooit in productie).
-TURNSTILE_SECRET=
-
-RESEND_API_KEY=
-EMAIL_FROM=AllRound Direct <noreply@localhost>
-EMAIL_REPLY_TO=
+MOLLIE_BLOCK_LIVE_REFUNDS=true

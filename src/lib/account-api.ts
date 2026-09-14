@@ -51,7 +51,9 @@ export type OrderDetail = {
   placedAt: string | Date
   status: string
   statusLabel: string
+  paymentStatus?: string
   paymentMethod: string | null
+  email?: string
   currency: string
   subtotalCents: number
   vatCents: number
@@ -59,13 +61,21 @@ export type OrderDetail = {
   totalCents: number
   billing: Record<string, string>
   shipping: Record<string, string>
+  timeline?: Array<{
+    id: string
+    label: string
+    reached: boolean
+    at?: string | null
+  }>
   items: Array<{
     id: string
     name: string
     sku: string | null
     quantity: number
     unitPriceCents: number
+    lineTotalCents?: number
     vatRate: number
+    imageRef?: string | null
   }>
   shipments: Array<{
     id: string
@@ -159,6 +169,12 @@ export function lookupGuestOrder(orderNumber: string, email: string, turnstileTo
     method: 'POST',
     body: JSON.stringify({ orderNumber, email, turnstileToken }),
   })
+}
+
+export function accessGuestOrder(orderNumber: string, token: string) {
+  return apiFetch<OrderDetail>(
+    `/guest-orders/access?order=${encodeURIComponent(orderNumber)}&token=${encodeURIComponent(token)}`,
+  )
 }
 
 export function getDevEmail(to: string) {

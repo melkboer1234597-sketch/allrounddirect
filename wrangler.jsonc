@@ -7,11 +7,14 @@
   "compatibility_flags": ["nodejs_compat"],
 
   "vars": {
-    "ENVIRONMENT": "development",
-    "BETTER_AUTH_URL": "http://localhost:5173",
-    "SITE_URL": "http://localhost:5173",
+    // Production Worker defaults. Override locally via `.dev.vars`.
+    "ENVIRONMENT": "production",
+    "BETTER_AUTH_URL": "https://www.allrounddirect.nl",
+    "SITE_URL": "https://www.allrounddirect.nl",
+    "PUBLIC_SITE_URL": "https://www.allrounddirect.nl",
     "MOLLIE_MODE": "test",
-    "MOLLIE_ALLOW_LIVE": "false"
+    "MOLLIE_ALLOW_LIVE": "false",
+    "MOLLIE_BLOCK_LIVE_REFUNDS": "true"
   },
 
   "assets": {
@@ -40,14 +43,16 @@
       "binding": "DB",
       "database_name": "cloth",
       "database_id": "e41adef2-8318-483e-9847-de4cb71ca545",
-      "migrations_dir": "drizzle"
+      "migrations_dir": "drizzle",
+      "remote": true
     }
   ],
 
   "r2_buckets": [
     {
       "binding": "MEDIA",
-      "bucket_name": "piccas"
+      "bucket_name": "piccas",
+      "remote": true
     }
   ],
 
