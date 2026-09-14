@@ -22,12 +22,8 @@ export function PlaceholderPage() {
       />
       <Container>
         <div className="max-w-2xl">
-          <h1 className="font-heading text-[32px] leading-tight font-semibold text-ink md:text-[40px]">
-            {page.title}
-          </h1>
-          <p className="mt-4 text-[16px] leading-relaxed text-muted md:text-[17px]">
-            {page.description}
-          </p>
+          <h1 className="heading-display text-ink">{page.title}</h1>
+          <p className="text-body mt-4 text-muted">{page.description}</p>
           {pathname === '/zoeken' && query ? (
             <p className="mt-3 text-[15px] text-ink">
               Zoekterm: <span className="font-medium">{query}</span>

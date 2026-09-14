@@ -27,7 +27,7 @@ const items = [
 export function TrustStrip() {
   return (
     <section aria-label="Voordelen" className="border-y border-line bg-surface">
-      <Container className="grid grid-cols-1 gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:py-12">
+      <Container className="grid grid-cols-1 gap-6 py-8 min-[480px]:grid-cols-2 md:gap-8 md:py-10 lg:grid-cols-4 lg:py-12">
         {items.map((item) => {
           const Icon = item.icon
           return (

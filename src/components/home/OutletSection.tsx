@@ -10,22 +10,19 @@ export function OutletSection() {
           src={assets.sectionOutlet}
           alt="Outletopstelling met meubels, keukenapparatuur en magazijnvoorraad"
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover object-left opacity-45"
+          className="absolute inset-0 h-full w-full object-cover object-[20%_center] opacity-40 md:object-left"
         />
         <div className="absolute inset-0 bg-navy/55" />
-        <Container className="relative py-14 md:py-20 lg:py-24">
+        <Container className="relative py-12 md:py-16 lg:py-20">
           <div className="max-w-xl text-white">
-            <h2
-              id="outlet-heading"
-              className="font-heading text-[28px] leading-tight font-semibold md:text-[32px] lg:text-[36px]"
-            >
+            <h2 id="outlet-heading" className="heading-section">
               Outlet en tijdelijke partijen
             </h2>
-            <p className="mt-4 text-[16px] leading-relaxed text-white/85 md:text-[17px]">
+            <p className="text-body mt-3 text-white/85 md:mt-4">
               Geselecteerde producten en partijen tegen scherpe prijzen. Beschikbaarheid verschilt
               per product en voorraad.
             </p>
-            <div className="mt-7">
+            <div className="mt-6 sm:mt-7">
               <Button to="/outlet" variant="onDark">
                 Bekijk outlet
               </Button>

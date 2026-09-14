@@ -14,16 +14,13 @@ export function NewsletterSection() {
 
   return (
     <section aria-labelledby="newsletter-heading" className="border-t border-line">
-      <Container className="py-12 md:py-16">
-        <div className="grid items-end gap-6 md:grid-cols-[1fr_minmax(280px,420px)] md:gap-12">
+      <Container className="py-10 md:py-14">
+        <div className="grid items-end gap-5 md:grid-cols-[1fr_minmax(260px,400px)] md:gap-10">
           <div>
-            <h2
-              id="newsletter-heading"
-              className="font-heading text-[24px] leading-tight font-semibold text-ink md:text-[28px]"
-            >
+            <h2 id="newsletter-heading" className="heading-section text-ink">
               Op de hoogte blijven?
             </h2>
-            <p className="mt-2 text-[16px] leading-relaxed text-muted">
+            <p className="text-body mt-2 text-muted">
               Ontvang nieuwe producten, aanbiedingen en zakelijke updates per e-mail.
             </p>
           </div>
@@ -47,9 +44,7 @@ export function NewsletterSection() {
                 placeholder="Uw e-mailadres"
                 className="h-11 min-w-0 flex-1 rounded-[4px] bg-white px-3 text-[15px] text-ink ring-1 ring-line outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
               />
-              <Button type="submit" className="h-11 sm:w-auto">
-                Aanmelden
-              </Button>
+              <Button type="submit">Aanmelden</Button>
             </form>
           )}
         </div>

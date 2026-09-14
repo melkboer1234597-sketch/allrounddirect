@@ -12,12 +12,12 @@ export function FeaturedProducts() {
           titleId="featured-heading"
           title="Uitgelicht assortiment"
           action={
-            <Button to="/assortiment" variant="secondary" className="hidden md:inline-flex">
+            <Button to="/assortiment" variant="secondary">
               Bekijk alles
             </Button>
           }
         />
-        <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-8 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {DEMO_FEATURED_PRODUCTS.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
