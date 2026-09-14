@@ -1,11 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import {
-  FOOTER_ASSORTMENT,
-  FOOTER_BUSINESS,
-  FOOTER_LEGAL,
-  FOOTER_SERVICE,
-} from '@/config/site'
+import { FOOTER_ASSORTMENT, FOOTER_BUSINESS, FOOTER_LEGAL, FOOTER_SERVICE } from '@/config/site'
 import { Container } from '@/components/ui/Container'
 import { assets } from '@/lib/assets'
 
@@ -22,7 +17,10 @@ function FooterColumn({
       <ul className="mt-4 space-y-2.5">
         {items.map((item) => (
           <li key={item.href}>
-            <Link to={item.href} className="text-[14px] text-white/75 transition-colors hover:text-white">
+            <Link
+              to={item.href}
+              className="text-[14px] text-white/75 transition-colors hover:text-white"
+            >
               {item.label}
             </Link>
           </li>

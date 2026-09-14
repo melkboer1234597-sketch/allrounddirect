@@ -25,14 +25,20 @@ export function SearchForm({ className, id = 'site-search', compact = false }: S
         Zoeken
       </label>
       <div className="flex h-11 items-center rounded-[4px] bg-surface ring-1 ring-line focus-within:ring-2 focus-within:ring-brand">
-        <Search className="ml-3 h-[18px] w-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
+        <Search
+          className="ml-3 h-[18px] w-[18px] shrink-0 text-muted"
+          strokeWidth={1.75}
+          aria-hidden
+        />
         <input
           id={id}
           type="search"
           name="q"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={compact ? 'Zoek producten of categorieën' : 'Zoek naar producten, categorieën of merken'}
+          placeholder={
+            compact ? 'Zoek producten of categorieën' : 'Zoek naar producten, categorieën of merken'
+          }
           className="h-full min-w-0 flex-1 bg-transparent px-2.5 text-[15px] text-ink outline-none placeholder:text-muted"
         />
         <button

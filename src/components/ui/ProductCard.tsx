@@ -58,7 +58,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {product.name}
           </Link>
         </h3>
-        <p className="mt-2 text-[16px] font-semibold tracking-tight text-ink">{formatPrice(product)}</p>
+        <p className="mt-2 text-[16px] font-semibold tracking-tight text-ink">
+          {formatPrice(product)}
+        </p>
         <div className="mt-auto pt-3">
           <Button to={href} variant="secondary" className="w-full">
             Bekijken

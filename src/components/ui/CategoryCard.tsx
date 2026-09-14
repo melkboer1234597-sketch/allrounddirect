@@ -38,7 +38,9 @@ export function CategoryCard({
       />
       <div className="absolute inset-0 bg-linear-to-t from-navy/80 via-navy/15 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-3.5 md:p-5">
-        <h3 className="font-heading text-[17px] font-semibold text-white md:text-[20px]">{title}</h3>
+        <h3 className="font-heading text-[17px] font-semibold text-white md:text-[20px]">
+          {title}
+        </h3>
         <p className="mt-0.5 text-[13px] text-white/80">Bekijken</p>
       </div>
     </Link>

@@ -24,8 +24,8 @@ export function Hero() {
                 Voor thuis, horeca en bedrijf.
               </h1>
               <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-white/90 sm:mt-4 sm:text-[16px] md:text-[17px]">
-                Meubels, vloeren, keukenproducten, koelapparatuur en meer. Bestel eenvoudig online en
-                laat uw bestelling leveren waar u deze nodig heeft.
+                Meubels, vloeren, keukenproducten, koelapparatuur en meer. Bestel eenvoudig online
+                en laat uw bestelling leveren waar u deze nodig heeft.
               </p>
               <div className="mt-5 flex flex-col gap-2.5 min-[400px]:flex-row min-[400px]:flex-wrap sm:mt-7">
                 <Button to="/assortiment" variant="primary" className="w-full min-[400px]:w-auto">
