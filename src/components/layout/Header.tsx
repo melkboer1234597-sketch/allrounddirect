@@ -28,7 +28,9 @@ export function Header() {
       <div
         className={cn(
           'sticky top-0 z-30 isolate bg-white transition-shadow duration-150 motion-reduce:transition-none',
-          scrolled ? 'shadow-[0_1px_0_0_var(--color-line),0_8px_16px_-12px_rgba(7,31,63,0.18)]' : 'border-b border-line',
+          scrolled
+            ? 'border-b border-line shadow-[0_8px_16px_-12px_rgba(7,31,63,0.2)]'
+            : 'border-b border-line',
         )}
       >
         <Container className="flex h-14 items-center gap-1 min-[375px]:gap-2 md:h-16 lg:h-[72px] lg:gap-8">
