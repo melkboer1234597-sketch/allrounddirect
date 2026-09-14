@@ -23,6 +23,7 @@ export function HomePage() {
         imageAlt="Open woonkeuken met bank, eettafel, houten vloer en keuken"
         includeWebsiteSchema
         robots="index,follow"
+        preloadImage
       />
       <main id="main">
         <Hero />

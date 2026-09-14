@@ -8,8 +8,9 @@ export function OutletSection() {
       <div className="relative overflow-hidden">
         <img
           src={assets.sectionOutlet}
-          alt="Outletopstelling met meubels, keukenapparatuur en magazijnvoorraad"
+          alt=""
           loading="lazy"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-[20%_center] opacity-40 md:object-left"
         />
         <div className="absolute inset-0 bg-navy/55" />

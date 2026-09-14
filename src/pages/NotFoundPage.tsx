@@ -1,40 +1,51 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { NOT_FOUND_SEO } from '@/config/site'
 import { SeoHead } from '@/components/seo/SeoHead'
+import { SearchForm } from '@/components/ui/SearchForm'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
+import { CATALOG_TAXONOMY } from '@/data/taxonomy'
+
+const POPULAR = CATALOG_TAXONOMY.filter((item) =>
+  ['meubels', 'vloeren', 'keuken', 'horeca', 'koelen-vriezen'].includes(item.slug),
+)
 
 export function NotFoundPage() {
+  const { pathname } = useLocation()
+
   return (
     <main id="main" className="section-space">
       <SeoHead
         title={NOT_FOUND_SEO.seoTitle}
         description={NOT_FOUND_SEO.description}
-        path="/"
+        path={pathname}
         robots={NOT_FOUND_SEO.robots}
       />
       <Container>
         <div className="max-w-2xl">
           <h1 className="heading-display text-ink">Pagina niet gevonden</h1>
           <p className="text-body mt-4 text-muted">
-            Deze pagina bestaat niet of is verplaatst. Ga terug naar de homepage of bekijk het
-            assortiment.
+            Dit adres bestaat niet of is verplaatst. Zoek een product of ga verder via een
+            hoofdcategorie.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button to="/">Naar homepage</Button>
-            <Button to="/assortiment" variant="secondary">
-              Assortiment
-            </Button>
+          <div className="mt-8 max-w-lg">
+            <SearchForm id="not-found-search" />
           </div>
-          <p className="mt-10 text-[14px] text-muted">
-            <Link to="/contact" className="text-brand hover:underline">
-              Contact
-            </Link>
-            {' · '}
-            <Link to="/klantenservice" className="text-brand hover:underline">
-              Klantenservice
-            </Link>
-          </p>
+          <ul className="mt-8 flex flex-wrap gap-3">
+            {POPULAR.map((item) => (
+              <li key={item.slug}>
+                <Link
+                  to={`/${item.slug}`}
+                  className="inline-flex min-h-11 items-center rounded-[4px] bg-surface px-3 text-[14px] ring-1 ring-line hover:ring-brand"
+                >
+                  {item.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8">
+            <Button to="/">Naar homepage</Button>
+          </div>
         </div>
       </Container>
     </main>

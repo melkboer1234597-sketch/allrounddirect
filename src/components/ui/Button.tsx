@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 
@@ -22,6 +22,7 @@ type Common = {
   variant?: ButtonVariant
   className?: string
   children: ReactNode
+  to?: string
 }
 
 export function Button({
@@ -29,20 +30,34 @@ export function Button({
   className,
   children,
   to,
+  type = 'button',
+  disabled,
+  onClick,
   ...rest
 }: Common & ButtonHTMLAttributes<HTMLButtonElement> & { to?: string }) {
   const classes = cn(base, variants[variant], className)
 
   if (to) {
+    if (disabled) {
+      return (
+        <span className={cn(classes, 'pointer-events-none opacity-50')} aria-disabled="true">
+          {children}
+        </span>
+      )
+    }
     return (
-      <Link to={to} className={classes}>
+      <Link
+        to={to}
+        className={classes}
+        onClick={onClick as ((event: MouseEvent<HTMLAnchorElement>) => void) | undefined}
+      >
         {children}
       </Link>
     )
   }
 
   return (
-    <button className={classes} {...rest}>
+    <button type={type} className={classes} disabled={disabled} onClick={onClick} {...rest}>
       {children}
     </button>
   )

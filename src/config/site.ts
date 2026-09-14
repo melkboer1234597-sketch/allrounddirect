@@ -1,4 +1,6 @@
-export type RobotsDirective = 'index,follow' | 'noindex,nofollow'
+import { PUBLIC_SITEMAP_ENTRIES, ROBOTS_DISALLOW } from '../../shared/seo-routes'
+
+export type RobotsDirective = 'index,follow' | 'noindex,follow' | 'noindex,nofollow'
 
 export type PageSeo = {
   path: string
@@ -88,11 +90,7 @@ export const PUBLIC_PAGES: PageSeo[] = [
     'Horeca',
     'Apparatuur, meubilair en inrichting voor horeca. Voor grotere aantallen is een offerte mogelijk.',
   ),
-  page(
-    '/wonen',
-    'Wonen',
-    'Woonproducten voor interieur en dagelijks gebruik bij AllRound Direct.',
-  ),
+  page('/wonen', 'Wonen', 'Woonproducten voor interieur en dagelijks gebruik bij AllRound Direct.'),
   page(
     '/zakelijk',
     'Zakelijk bestellen',
@@ -135,7 +133,37 @@ export const PUBLIC_PAGES: PageSeo[] = [
   ),
   page('/privacy', 'Privacy', 'Privacybeleid van AllRound Direct.'),
   page('/cookies', 'Cookies', 'Cookiebeleid van AllRound Direct.'),
-  page('/algemene-voorwaarden', 'Algemene voorwaarden', 'Algemene voorwaarden van AllRound Direct.'),
+  page(
+    '/algemene-voorwaarden',
+    'Algemene voorwaarden',
+    'Algemene voorwaarden van AllRound Direct.',
+  ),
+  page(
+    '/garantie-en-klachten',
+    'Garantie en klachten',
+    'Wettelijke conformiteit, garantie en klachten bij AllRound Direct.',
+  ),
+  page('/betalen', 'Betalen', 'Betalen, btw en betaalmethoden bij AllRound Direct.'),
+  page(
+    '/herroepen',
+    'Overeenkomst herroepen',
+    'Herroep een consumentenaankoop bij AllRound Direct zonder account.',
+  ),
+  page(
+    '/herroepingsformulier',
+    'Modelformulier herroeping',
+    'Modelformulier voor herroeping van een overeenkomst bij AllRound Direct.',
+  ),
+  page(
+    '/zakelijk/voorwaarden',
+    'Zakelijke voorwaarden',
+    'Aanvullende voorwaarden voor zakelijke inkoop bij AllRound Direct.',
+  ),
+  page(
+    '/zakelijk/offerte',
+    'Offerte aanvragen',
+    'Vraag een offerte aan voor grotere aantallen, horeca of projecten bij AllRound Direct.',
+  ),
   page('/disclaimer', 'Disclaimer', 'Disclaimer van AllRound Direct.'),
   page(
     '/offerte',
@@ -151,6 +179,11 @@ export const PUBLIC_PAGES: PageSeo[] = [
     '/montage',
     'Montage',
     'AllRound Direct levert producten. Voor vloerleggen of keukenplaatsing kunt u terecht bij AllRoundKlussenbedrijf.',
+  ),
+  page(
+    '/advies',
+    'Advies',
+    'Praktische gidsen over vloeren, meubels en later keuken, koelen en horeca bij AllRound Direct.',
   ),
   page(
     '/assortiment',
@@ -173,23 +206,38 @@ export const PRIVATE_PAGES: PageSeo[] = [
     robots: 'noindex,nofollow',
     sitemap: false,
   }),
-  page('/bestelling-volgen', 'Bestelling volgen', 'Status van een bestelling bij AllRound Direct.', {
+  page('/afrekenen', 'Afrekenen', 'Afrekenen bij AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
+  page('/bestelling/bevestiging', 'Bestelling bevestigen', 'Betalingsstatus van een bestelling.', {
     robots: 'noindex,nofollow',
     sitemap: false,
   }),
   page(
-    '/zoeken',
-    'Zoeken',
-    'Zoek in het assortiment van AllRound Direct.',
-    { robots: 'noindex,nofollow', sitemap: false },
+    '/bestelling-volgen',
+    'Bestelling volgen',
+    'Status van een bestelling bij AllRound Direct.',
+    {
+      robots: 'noindex,nofollow',
+      sitemap: false,
+    },
   ),
+  page('/zoeken', 'Zoeken', 'Zoek in het assortiment van AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
 ]
 
 export const NOT_FOUND_SEO: PageSeo = page(
   '/404',
   'Pagina niet gevonden',
   'Deze pagina bestaat niet. Ga terug naar de homepage van AllRound Direct.',
-  { robots: 'noindex,nofollow', sitemap: false, seoTitle: 'Pagina niet gevonden | AllRound Direct' },
+  {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+    seoTitle: 'Pagina niet gevonden | AllRound Direct',
+  },
 )
 
 export const ALL_STATIC_PAGES: PageSeo[] = [...PUBLIC_PAGES, ...PRIVATE_PAGES]
@@ -201,25 +249,52 @@ export function getPageSeo(pathname: string): PageSeo | undefined {
   return PAGE_BY_PATH.get(normalized)
 }
 
-export const PLACEHOLDER_PATHS = ALL_STATIC_PAGES.map((item) => item.path.slice(1))
+const DYNAMIC_FRONT_SLUGS = new Set([
+  'meubels',
+  'vloeren',
+  'keuken',
+  'koelen-vriezen',
+  'horeca',
+  'wonen',
+  'zakelijk',
+  'outlet',
+  'advies',
+  'over-ons',
+  'klantenservice',
+  'veelgestelde-vragen',
+  'offerte',
+  'projecten',
+  'montage',
+  'zoeken',
+  'assortiment',
+  'account',
+  'favorieten',
+  'bestelling-volgen',
+  'contact',
+  'privacy',
+  'cookies',
+  'algemene-voorwaarden',
+  'bezorgen',
+  'retourneren',
+  'garantie-en-klachten',
+  'betalen',
+  'herroepen',
+  'herroepingsformulier',
+  'disclaimer',
+  'winkelwagen',
+  'afrekenen',
+  'bestelling/bevestiging',
+  'zakelijk/voorwaarden',
+  'zakelijk/offerte',
+])
 
-export const SITEMAP_PATHS: Array<{ path: string; changefreq: string; priority: number }> = [
-  { path: '/', changefreq: 'weekly', priority: 1 },
-  ...PUBLIC_PAGES.map((item) => ({
-    path: item.path,
-    changefreq: item.changefreq ?? 'weekly',
-    priority: item.priority ?? 0.7,
-  })),
-]
+export const PLACEHOLDER_PATHS = ALL_STATIC_PAGES.map((item) => item.path.slice(1)).filter(
+  (slug) => !DYNAMIC_FRONT_SLUGS.has(slug),
+)
 
-export const ROBOTS_DISALLOW = [
-  '/account',
-  '/favorieten',
-  '/winkelwagen',
-  '/bestelling-volgen',
-  '/zoeken',
-  '/admin',
-] as const
+export const SITEMAP_PATHS = PUBLIC_SITEMAP_ENTRIES
+
+export { ROBOTS_DISALLOW }
 
 export const NAV_CATEGORIES = [
   { label: 'Meubels', href: '/meubels' },
@@ -241,25 +316,38 @@ export const FOOTER_ASSORTMENT = [
   { label: 'Outlet', href: '/outlet' },
 ] as const
 
-export const FOOTER_SERVICE = [
+export type FooterNavItem = {
+  label: string
+  href?: string
+  action?: 'cookie-settings'
+}
+
+export const FOOTER_SERVICE: FooterNavItem[] = [
   { label: 'Contact', href: '/contact' },
   { label: 'Bestelling volgen', href: '/bestelling-volgen' },
   { label: 'Bezorgen', href: '/bezorgen' },
   { label: 'Retourneren', href: '/retourneren' },
+  { label: 'Overeenkomst herroepen', href: '/herroepen' },
+  { label: 'Garantie en klachten', href: '/garantie-en-klachten' },
+  { label: 'Betalen', href: '/betalen' },
   { label: 'Veelgestelde vragen', href: '/veelgestelde-vragen' },
-] as const
+  { label: 'Advies', href: '/advies' },
+  { label: 'Cookie-instellingen', action: 'cookie-settings' },
+]
 
-export const FOOTER_BUSINESS = [
+export const FOOTER_BUSINESS: FooterNavItem[] = [
   { label: 'Zakelijk bestellen', href: '/zakelijk' },
-  { label: 'Offerte aanvragen', href: '/offerte' },
+  { label: 'Zakelijke voorwaarden', href: '/zakelijk/voorwaarden' },
+  { label: 'Offerte aanvragen', href: '/zakelijk/offerte' },
   { label: 'Projecten', href: '/projecten' },
   { label: 'Montage via AllRoundKlussenbedrijf', href: '/montage' },
-] as const
+]
 
-export const FOOTER_LEGAL = [
+export const FOOTER_LEGAL: FooterNavItem[] = [
   { label: 'Over ons', href: '/over-ons' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Cookies', href: '/cookies' },
   { label: 'Algemene voorwaarden', href: '/algemene-voorwaarden' },
+  { label: 'Herroepingsformulier', href: '/herroepingsformulier' },
   { label: 'Disclaimer', href: '/disclaimer' },
-] as const
+]

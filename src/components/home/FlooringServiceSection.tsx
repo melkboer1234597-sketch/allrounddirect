@@ -11,7 +11,10 @@ export function FlooringServiceSection() {
             <img
               src={assets.categoryVloeren}
               alt="Houtlook vloer in een woonkamer, gefotografeerd van dichtbij"
+              width={1400}
+              height={875}
               loading="lazy"
+              decoding="async"
               className="aspect-[16/10] w-full object-cover object-[center_80%] lg:aspect-[5/4]"
             />
           </div>
@@ -25,8 +28,8 @@ export function FlooringServiceSection() {
             </p>
             <div className="mt-6 flex flex-col gap-2.5 min-[400px]:flex-row sm:mt-7">
               <Button to="/vloeren">Bekijk vloeren</Button>
-              <Button to="/montage" variant="secondary">
-                Montage aanvragen
+              <Button to="/advies/pvc-of-laminaat-kiezen" variant="secondary">
+                PVC of laminaat kiezen
               </Button>
             </div>
           </div>

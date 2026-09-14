@@ -45,6 +45,14 @@ const categories = [
     objectPosition: 'center',
   },
   {
+    title: 'Wonen',
+    href: '/wonen',
+    image: assets.categoryMeubels,
+    alt: 'Woonkamerinrichting',
+    size: 'regular' as const,
+    objectPosition: 'center',
+  },
+  {
     title: 'Outlet',
     href: '/outlet',
     image: assets.sectionOutlet,

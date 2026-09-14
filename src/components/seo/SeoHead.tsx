@@ -11,6 +11,11 @@ type SeoHeadProps = {
   robots?: RobotsDirective
   includeWebsiteSchema?: boolean
   includeOrganizationSchema?: boolean
+  extraJsonLd?: Array<{ id: string; data: unknown }>
+  ogType?: 'website' | 'article' | 'product'
+  preloadImage?: boolean
+  prevPath?: string | null
+  nextPath?: string | null
 }
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
@@ -24,8 +29,13 @@ function upsertMeta(selector: string, attributes: Record<string, string>) {
   })
 }
 
-function upsertLink(rel: string, href: string) {
-  let el = document.head.querySelector(`link[rel="${rel}"]`)
+function upsertLink(rel: string, href: string | null) {
+  const existing = document.head.querySelector(`link[rel="${rel}"]`)
+  if (!href) {
+    existing?.remove()
+    return
+  }
+  let el = existing
   if (!el) {
     el = document.createElement('link')
     el.setAttribute('rel', rel)
@@ -54,6 +64,11 @@ export function SeoHead({
   robots = 'index,follow',
   includeWebsiteSchema = false,
   includeOrganizationSchema = true,
+  extraJsonLd = [],
+  ogType = 'website',
+  preloadImage = false,
+  prevPath = null,
+  nextPath = null,
 }: SeoHeadProps) {
   useEffect(() => {
     const url = canonicalUrl(path)
@@ -68,8 +83,10 @@ export function SeoHead({
     upsertMeta('meta[name="robots"]', { name: 'robots', content: robots })
     upsertMeta('meta[name="googlebot"]', { name: 'googlebot', content: robots })
     upsertLink('canonical', url)
+    upsertLink('prev', prevPath ? canonicalUrl(prevPath) : null)
+    upsertLink('next', nextPath ? canonicalUrl(nextPath) : null)
 
-    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' })
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: ogType })
     upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: SITE.locale })
     upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: SITE.name })
     upsertMeta('meta[property="og:title"]', { property: 'og:title', content: title })
@@ -105,6 +122,20 @@ export function SeoHead({
     } else {
       document.getElementById('jsonld-website')?.remove()
     }
+
+    extraJsonLd.forEach((item) => upsertJsonLd(item.id, item.data))
+
+    const preloadId = 'lcp-preload'
+    document.getElementById(preloadId)?.remove()
+    if (preloadImage && image) {
+      const link = document.createElement('link')
+      link.id = preloadId
+      link.rel = 'preload'
+      link.as = 'image'
+      link.href = image.startsWith('http') ? image : image
+      link.setAttribute('fetchpriority', 'high')
+      document.head.appendChild(link)
+    }
   }, [
     title,
     description,
@@ -114,6 +145,11 @@ export function SeoHead({
     robots,
     includeWebsiteSchema,
     includeOrganizationSchema,
+    JSON.stringify(extraJsonLd),
+    ogType,
+    preloadImage,
+    prevPath,
+    nextPath,
   ])
 
   return null

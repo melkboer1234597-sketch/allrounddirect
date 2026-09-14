@@ -16,7 +16,7 @@ export function BusinessSection() {
               Voor grotere aantallen en zakelijke aanvragen maken we graag een passende offerte.
             </p>
             <div className="mt-6 flex flex-col gap-2.5 min-[400px]:flex-row min-[400px]:items-center sm:mt-7">
-              <Button to="/offerte">Zakelijke aanvraag</Button>
+              <Button to="/zakelijk/offerte">Zakelijke offerte</Button>
               <Button to="/horeca" variant="text">
                 Bekijk horeca
               </Button>
@@ -26,7 +26,10 @@ export function BusinessSection() {
             <img
               src={assets.sectionBusiness}
               alt="Zakelijke inrichting met pallets, lange tafel en professionele keuken"
+              width={1400}
+              height={875}
               loading="lazy"
+              decoding="async"
               className="aspect-[16/10] w-full object-cover object-[30%_center] lg:aspect-[5/4]"
             />
           </div>

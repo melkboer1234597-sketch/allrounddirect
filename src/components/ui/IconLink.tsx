@@ -20,7 +20,7 @@ export function IconLink({ to, label, badge, className, children }: IconLinkProp
       )}
     >
       {children}
-      {typeof badge === 'number' ? (
+      {typeof badge === 'number' && badge > 0 ? (
         <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-white">
           {badge}
         </span>

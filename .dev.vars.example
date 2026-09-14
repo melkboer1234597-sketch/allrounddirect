@@ -2,4 +2,16 @@
 # Kopieer naar .dev.vars en vul waarden in.
 
 MOLLIE_API_KEY=
+MOLLIE_MODE=test
+MOLLIE_ALLOW_LIVE=false
 ADMIN_SESSION_SECRET=dev-session-secret-change-me
+
+# Minimaal 32 tekens. Vervang dit in elke omgeving.
+BETTER_AUTH_SECRET=dev-better-auth-secret-change-me-32ch
+
+# Turnstile: leeg = development fallback (nooit in productie).
+TURNSTILE_SECRET=
+
+RESEND_API_KEY=
+EMAIL_FROM=AllRound Direct <noreply@localhost>
+EMAIL_REPLY_TO=

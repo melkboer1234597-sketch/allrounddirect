@@ -26,11 +26,13 @@ export function buildRobotsTxt(origin = getSiteOrigin()): string {
   const disallow = ROBOTS_DISALLOW.map((path) => `Disallow: ${path}`).join('\n')
   const sitemapLine = origin ? `Sitemap: ${origin.replace(/\/$/, '')}/sitemap.xml\n` : ''
 
-  return `User-agent: *
+  return (
+    `User-agent: *
 Allow: /
 ${disallow}
 
 ${sitemapLine}`.trim() + '\n'
+  )
 }
 
 function escapeXml(value: string): string {

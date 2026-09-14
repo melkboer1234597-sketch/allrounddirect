@@ -1,29 +1,53 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "allrounddirect",
+  "account_id": "6b3387c18299d307197d2a39a0d9093d",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-14",
   "compatibility_flags": ["nodejs_compat"],
 
   "vars": {
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "development",
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    "SITE_URL": "http://localhost:5173",
+    "MOLLIE_MODE": "test",
+    "MOLLIE_ALLOW_LIVE": "false"
   },
 
-  // Vite production output. /api/* goes to Hono first; other routes use static assets + SPA fallback.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*",
+      "/media/*",
+      "/sitemap.xml",
+      "/sitemap-static.xml",
+      "/sitemap-categories.xml",
+      "/sitemap-content.xml",
+      "/sitemap-products.xml",
+      "/sitemap-products-*",
+      "/robots.txt",
+      "/meubels/hoekbanken",
+      "/vloeren/klik-pvc",
+      "/vloeren/plak-pvc",
+      "/offerte"
+    ]
   },
 
-  // Placeholder D1 id until the production database is created in Cloudflare.
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "allround-webshop-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "cloth",
+      "database_id": "e41adef2-8318-483e-9847-de4cb71ca545",
       "migrations_dir": "drizzle"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "piccas"
     }
   ],
 

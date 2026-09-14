@@ -1,0 +1,14 @@
+# robots.txt stuurt crawlers; het is geen beveiliging.
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /favorieten
+Disallow: /winkelwagen
+Disallow: /afrekenen
+Disallow: /bestelling
+Disallow: /bestelling-volgen
+Disallow: /zoeken
+Disallow: /admin
+Disallow: /scotdejewish
+Disallow: /api
+

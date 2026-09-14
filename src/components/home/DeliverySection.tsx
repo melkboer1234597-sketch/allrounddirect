@@ -11,7 +11,10 @@ export function DeliverySection() {
             <img
               src={assets.sectionDelivery}
               alt="Magazijn met pallets en een vrachtwagen klaar voor levering"
+              width={1400}
+              height={875}
               loading="lazy"
+              decoding="async"
               className="aspect-[16/10] w-full object-cover object-[70%_center] lg:aspect-[5/4]"
             />
           </div>

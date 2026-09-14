@@ -17,11 +17,21 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b --pretty false",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:migrate:local": "wrangler d1 migrations apply cloth --local",
+    "db:migrate:remote": "wrangler d1 migrations apply cloth --remote",
+    "admin:set-role": "node scripts/set-role.mjs",
+    "db:studio": "drizzle-kit studio",
+    "catalog:scan": "tsx scripts/catalog/scan-products.ts",
+    "catalog:dry-run": "tsx scripts/catalog/run-import.ts --dry-run",
+    "catalog:import": "tsx scripts/catalog/run-import.ts --import",
+    "catalog:images": "tsx scripts/catalog/run-import.ts --import --images-only",
+    "catalog:verify": "tsx scripts/catalog/run-import.ts --verify"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.4",
     "@mollie/api-client": "^4.6.0",
     "@tanstack/react-query": "^5.102.8",
+    "better-auth": "^1.7.4",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
@@ -29,9 +39,11 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3",
+    "sharp": "^0.34.4",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.901.0",
     "@cloudflare/workers-types": "^5.20260914.1",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.3.3",
@@ -46,6 +58,7 @@
     "eslint-plugin-prettier": "^5.5.6",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.57.0",
     "vite": "^8.3.0",

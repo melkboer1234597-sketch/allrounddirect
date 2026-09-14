@@ -1,9 +1,5 @@
 /**
  * Mollie payment client – uitsluitend server-side (Worker).
- * Niet importeren vanuit de frontend.
+ * Niet importeren vanuit de frontend. Gebruik createPaymentsService.
  */
-import createMollieClient from '@mollie/api-client'
-
-export function createPaymentsClient(apiKey: string) {
-  return createMollieClient({ apiKey })
-}
+export { createPaymentsService, assertMollieAllowed } from './mollie'

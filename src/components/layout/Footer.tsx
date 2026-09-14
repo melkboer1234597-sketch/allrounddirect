@@ -1,28 +1,44 @@
 import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { FOOTER_ASSORTMENT, FOOTER_BUSINESS, FOOTER_LEGAL, FOOTER_SERVICE } from '@/config/site'
+import {
+  FOOTER_ASSORTMENT,
+  FOOTER_BUSINESS,
+  FOOTER_LEGAL,
+  FOOTER_SERVICE,
+  type FooterNavItem,
+} from '@/config/site'
 import { Container } from '@/components/ui/Container'
 import { assets } from '@/lib/assets'
+import { openCookieSettings } from '@/lib/consent'
 
-function FooterColumn({
-  title,
-  items,
-}: {
-  title: string
-  items: readonly { label: string; href: string }[]
-}) {
+function FooterItem({ item }: { item: FooterNavItem }) {
+  if (item.action === 'cookie-settings') {
+    return (
+      <button
+        type="button"
+        className="text-left text-[14px] text-white/75 transition-colors hover:text-white"
+        onClick={() => openCookieSettings()}
+      >
+        {item.label}
+      </button>
+    )
+  }
+  if (!item.href) return null
+  return (
+    <Link to={item.href} className="text-[14px] text-white/75 transition-colors hover:text-white">
+      {item.label}
+    </Link>
+  )
+}
+
+function FooterColumn({ title, items }: { title: string; items: readonly FooterNavItem[] }) {
   return (
     <div>
       <p className="text-[12px] font-semibold tracking-[0.06em] text-white uppercase">{title}</p>
       <ul className="mt-4 space-y-2.5">
         {items.map((item) => (
-          <li key={item.href}>
-            <Link
-              to={item.href}
-              className="text-[14px] text-white/75 transition-colors hover:text-white"
-            >
-              {item.label}
-            </Link>
+          <li key={item.href ?? item.label}>
+            <FooterItem item={item} />
           </li>
         ))}
       </ul>
@@ -30,13 +46,7 @@ function FooterColumn({
   )
 }
 
-function FooterAccordion({
-  title,
-  items,
-}: {
-  title: string
-  items: readonly { label: string; href: string }[]
-}) {
+function FooterAccordion({ title, items }: { title: string; items: readonly FooterNavItem[] }) {
   return (
     <details className="group border-b border-white/10">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between py-1 text-[15px] font-medium text-white [&::-webkit-details-marker]:hidden">
@@ -48,10 +58,10 @@ function FooterAccordion({
       </summary>
       <ul className="space-y-2.5 pb-4">
         {items.map((item) => (
-          <li key={item.href}>
-            <Link to={item.href} className="block min-h-10 py-1 text-[14px] text-white/75">
-              {item.label}
-            </Link>
+          <li key={item.href ?? item.label}>
+            <span className="block min-h-10 py-1">
+              <FooterItem item={item} />
+            </span>
           </li>
         ))}
       </ul>
@@ -59,10 +69,11 @@ function FooterAccordion({
   )
 }
 
-const ABOUT_LINKS = [{ label: 'Over ons', href: '/over-ons' }] as const
+const ABOUT_LINKS: FooterNavItem[] = [{ label: 'Over ons', href: '/over-ons' }]
 
 export function Footer() {
   const year = new Date().getFullYear()
+  const legalBar = FOOTER_LEGAL.filter((item) => item.href !== '/over-ons')
 
   return (
     <footer className="isolate bg-navy text-white">
@@ -81,30 +92,41 @@ export function Footer() {
         </div>
 
         <div className="mt-6 lg:hidden">
-          <FooterAccordion title="Assortiment" items={FOOTER_ASSORTMENT} />
+          <FooterAccordion title="Assortiment" items={[...FOOTER_ASSORTMENT]} />
           <FooterAccordion title="Klantenservice" items={FOOTER_SERVICE} />
           <FooterAccordion title="Zakelijk" items={FOOTER_BUSINESS} />
           <FooterAccordion title="Over AllRound Direct" items={ABOUT_LINKS} />
         </div>
 
         <div className="mt-12 hidden grid-cols-4 gap-8 lg:grid">
-          <FooterColumn title="Assortiment" items={FOOTER_ASSORTMENT} />
+          <FooterColumn title="Assortiment" items={[...FOOTER_ASSORTMENT]} />
           <FooterColumn title="Klantenservice" items={FOOTER_SERVICE} />
           <FooterColumn title="Zakelijk" items={FOOTER_BUSINESS} />
-          <FooterColumn title="Informatie" items={FOOTER_LEGAL} />
+          <FooterColumn title="Juridisch" items={FOOTER_LEGAL} />
         </div>
       </Container>
       <div className="border-t border-white/10">
         <Container className="flex flex-col gap-3 py-4 text-[12px] text-white/55 md:flex-row md:items-center md:justify-between md:py-5 md:text-[13px]">
           <p>© {year} AllRound Direct. Alle rechten voorbehouden.</p>
           <ul className="flex flex-wrap gap-x-4 gap-y-2">
-            {FOOTER_LEGAL.filter((item) => item.href !== '/over-ons').map((item) => (
-              <li key={item.href}>
-                <Link to={item.href} className="hover:text-white">
-                  {item.label}
-                </Link>
+            {legalBar.map((item) => (
+              <li key={item.href ?? item.label}>
+                {item.href ? (
+                  <Link to={item.href} className="hover:text-white">
+                    {item.label}
+                  </Link>
+                ) : null}
               </li>
             ))}
+            <li>
+              <button
+                type="button"
+                className="hover:text-white"
+                onClick={() => openCookieSettings()}
+              >
+                Cookie-instellingen
+              </button>
+            </li>
           </ul>
         </Container>
       </div>

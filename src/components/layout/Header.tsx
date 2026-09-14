@@ -7,15 +7,20 @@ import { MobileMenu } from '@/components/layout/MobileMenu'
 import { Container } from '@/components/ui/Container'
 import { IconButton } from '@/components/ui/IconButton'
 import { IconLink } from '@/components/ui/IconLink'
-import { SearchForm } from '@/components/ui/SearchForm'
+import { SearchAutocomplete } from '@/components/search/SearchAutocomplete'
+import { useAuthSession } from '@/hooks/useAccount'
 import { useScrolled } from '@/hooks/useScrolled'
 import { assets } from '@/lib/assets'
+import { useCart } from '@/lib/cart'
 import { cn } from '@/lib/cn'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const scrolled = useScrolled(12)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const session = useAuthSession()
+  const { count } = useCart()
+  const accountHref = session.data?.user ? '/account/overzicht' : '/account'
 
   function closeMenu() {
     setMenuOpen(false)
@@ -54,27 +59,28 @@ export function Header() {
           </Link>
 
           <div className="hidden min-w-0 flex-1 justify-center lg:flex">
-            <SearchForm id="header-search" className="w-full max-w-[640px]" />
+            <SearchAutocomplete id="header-search" className="w-full max-w-[640px]" />
           </div>
 
           <div className="ml-auto flex items-center">
-            <IconLink to="/account" label="Account" className="hidden sm:inline-flex">
+            <IconLink to={accountHref} label="Account">
               <CircleUserRound className="h-5 w-5" strokeWidth={1.6} />
             </IconLink>
-            <IconLink to="/favorieten" label="Favorieten" className="hidden md:inline-flex">
+            <IconLink
+              to="/favorieten"
+              label="Favorieten"
+              className="hidden min-[400px]:inline-flex"
+            >
               <Heart className="h-5 w-5" strokeWidth={1.6} />
             </IconLink>
-            <IconLink to="/account" label="Account" className="sm:hidden">
-              <CircleUserRound className="h-5 w-5" strokeWidth={1.6} />
-            </IconLink>
-            <IconLink to="/winkelwagen" label="Winkelwagen" badge={0}>
+            <IconLink to="/winkelwagen" label="Winkelwagen" badge={count || undefined}>
               <ShoppingBag className="h-5 w-5" strokeWidth={1.6} />
             </IconLink>
           </div>
         </Container>
 
         <Container className="pb-3 lg:hidden">
-          <SearchForm id="mobile-search" compact />
+          <SearchAutocomplete id="mobile-search" compact />
         </Container>
         <DesktopNav />
       </div>

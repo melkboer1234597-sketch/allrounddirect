@@ -20,7 +20,15 @@ dist-worker
 .env
 .env.*
 !.env.example
+!.env.import.example
 .dev.vars
+
+# Catalog import cache (optimized images, never source scrape)
+.cache/
+
+# Large dry-run JSON stays local; markdown summaries may be committed
+data/import-reports/*.json
+
 
 # Cloudflare / Wrangler
 .wrangler/

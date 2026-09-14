@@ -32,7 +32,11 @@ export function CategoryCard({
       <img
         src={image}
         alt={imageAlt}
+        width={1200}
+        height={900}
         loading="lazy"
+        decoding="async"
+        sizes="(min-width: 1280px) 640px, (min-width: 768px) 50vw, 70vw"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         style={{ objectPosition }}
       />
@@ -41,7 +45,7 @@ export function CategoryCard({
         <h3 className="font-heading text-[17px] font-semibold text-white md:text-[20px]">
           {title}
         </h3>
-        <p className="mt-0.5 text-[13px] text-white/80">Bekijken</p>
+        <p className="mt-0.5 text-[13px] text-white/80">Naar {title.toLowerCase()}</p>
       </div>
     </Link>
   )
