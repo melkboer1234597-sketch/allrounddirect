@@ -10,7 +10,7 @@
  * fields are audit/source metadata and must not override customer-facing copy
  * unless an explicit future override flag is introduced.
  */
-import { CHECKOUT_COUNTRIES, type CheckoutCountry } from './checkout'
+import type { CheckoutCountry } from './checkout'
 import { formatCentsNl } from './money'
 
 export const commerceConfig = {
@@ -18,7 +18,8 @@ export const commerceConfig = {
   standardDeliveryMaxBusinessDays: 3,
   /** Eligible merchandise subtotal (cents) for free standard shipping. */
   freeShippingThresholdCents: 99_900,
-  supportedCountries: CHECKOUT_COUNTRIES,
+  /** Inline countries — avoids Worker runtime TDZ on imported const arrays. */
+  supportedCountries: ['NL', 'BE'] as const satisfies readonly CheckoutCountry[],
 } as const
 
 export type CommerceConfig = typeof commerceConfig
