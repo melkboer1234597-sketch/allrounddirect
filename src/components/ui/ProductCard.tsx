@@ -2,41 +2,36 @@ import { Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import type { DemoProduct } from '@/types/catalog'
-
-function formatPrice(product: DemoProduct): string {
-  if (product.priceLabel) return product.priceLabel
-  if (!product.price) return 'Prijs op aanvraag'
-
-  const formatted = new Intl.NumberFormat('nl-NL', {
-    style: 'currency',
-    currency: product.price.currency,
-    minimumFractionDigits: product.price.amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(product.price.amount)
-
-  if (product.price.per === 'm2') return `${formatted} per m²`
-  return formatted
-}
+import { formatProductPrice } from '@/lib/money'
+import { productPath } from '@/services/catalog'
+import type { CatalogProduct } from '@/types/catalog'
 
 type ProductCardProps = {
-  product: DemoProduct
+  product: CatalogProduct
   className?: string
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const href = '/assortiment'
+  const href = productPath(product)
+  const image = product.images[0]
 
   return (
     <article className={cn('group flex h-full flex-col', className)}>
       <div className="relative overflow-hidden rounded-[12px] bg-surface">
-        <Link to={href} className="block aspect-[4/3] overflow-hidden" aria-label={product.name}>
-          <img
-            src={product.image}
-            alt={product.imageAlt}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-          />
+        <Link to={href} className="block aspect-[4/3] overflow-hidden">
+          {image ? (
+            <img
+              src={image.src}
+              alt={image.alt}
+              width={image.width ?? 800}
+              height={image.height ?? 600}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            />
+          ) : (
+            <span className="sr-only">{product.name}</span>
+          )}
         </Link>
         <Link
           to="/favorieten"
@@ -59,7 +54,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </Link>
         </h3>
         <p className="mt-2 text-[16px] font-semibold tracking-tight text-ink">
-          {formatPrice(product)}
+          {formatProductPrice(product)}
         </p>
         <div className="mt-auto pt-3">
           <Button to={href} variant="secondary" className="w-full">

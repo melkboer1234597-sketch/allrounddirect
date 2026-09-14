@@ -20,7 +20,9 @@ export function HomePage() {
         description={SITE.defaultDescription}
         path="/"
         image={assets.hero}
+        imageAlt="Open woonkeuken met bank, eettafel, houten vloer en keuken"
         includeWebsiteSchema
+        robots="index,follow"
       />
       <main id="main">
         <Hero />

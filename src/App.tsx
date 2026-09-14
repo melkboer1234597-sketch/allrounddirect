@@ -1,37 +1,10 @@
 import { Route, Routes } from 'react-router-dom'
 import { RootLayout } from '@/layouts/RootLayout'
 import { HomePage } from '@/pages/HomePage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
-
-const PLACEHOLDER_PATHS = [
-  'meubels',
-  'vloeren',
-  'keuken',
-  'koelen-vriezen',
-  'horeca',
-  'wonen',
-  'zakelijk',
-  'outlet',
-  'over-ons',
-  'contact',
-  'klantenservice',
-  'bezorgen',
-  'retourneren',
-  'veelgestelde-vragen',
-  'privacy',
-  'cookies',
-  'algemene-voorwaarden',
-  'disclaimer',
-  'account',
-  'favorieten',
-  'winkelwagen',
-  'offerte',
-  'projecten',
-  'montage',
-  'bestelling-volgen',
-  'zoeken',
-  'assortiment',
-] as const
+import { ProductPage } from '@/pages/ProductPage'
+import { PLACEHOLDER_PATHS } from '@/config/site'
 
 export function App() {
   return (
@@ -41,7 +14,8 @@ export function App() {
         {PLACEHOLDER_PATHS.map((path) => (
           <Route key={path} path={path} element={<PlaceholderPage />} />
         ))}
-        <Route path="*" element={<PlaceholderPage />} />
+        <Route path="product/:slug" element={<ProductPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   )

@@ -1,13 +1,16 @@
 import { useEffect } from 'react'
-import { SITE, canonicalUrl } from '@/config/site'
+import { SITE, canonicalUrl, type RobotsDirective } from '@/config/site'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 
 type SeoHeadProps = {
-  title?: string
-  description?: string
+  title: string
+  description: string
   path: string
   image?: string
+  imageAlt?: string
+  robots?: RobotsDirective
   includeWebsiteSchema?: boolean
+  includeOrganizationSchema?: boolean
 }
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
@@ -43,11 +46,14 @@ function upsertJsonLd(id: string, data: unknown) {
 }
 
 export function SeoHead({
-  title = SITE.defaultTitle,
-  description = SITE.defaultDescription,
+  title,
+  description,
   path,
   image,
+  imageAlt,
+  robots = 'index,follow',
   includeWebsiteSchema = false,
+  includeOrganizationSchema = true,
 }: SeoHeadProps) {
   useEffect(() => {
     const url = canonicalUrl(path)
@@ -55,10 +61,12 @@ export function SeoHead({
       ? image.startsWith('http')
         ? image
         : canonicalUrl(image)
-      : canonicalUrl('/favicon.png')
+      : canonicalUrl('/media/branding/allround-direct-logo-primary.png')
 
     document.title = title
     upsertMeta('meta[name="description"]', { name: 'description', content: description })
+    upsertMeta('meta[name="robots"]', { name: 'robots', content: robots })
+    upsertMeta('meta[name="googlebot"]', { name: 'googlebot', content: robots })
     upsertLink('canonical', url)
 
     upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' })
@@ -71,6 +79,9 @@ export function SeoHead({
     })
     upsertMeta('meta[property="og:url"]', { property: 'og:url', content: url })
     upsertMeta('meta[property="og:image"]', { property: 'og:image', content: ogImage })
+    if (imageAlt) {
+      upsertMeta('meta[property="og:image:alt"]', { property: 'og:image:alt', content: imageAlt })
+    }
 
     upsertMeta('meta[name="twitter:card"]', {
       name: 'twitter:card',
@@ -83,13 +94,27 @@ export function SeoHead({
     })
     upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImage })
 
-    upsertJsonLd('jsonld-organization', organizationJsonLd())
+    if (includeOrganizationSchema) {
+      upsertJsonLd('jsonld-organization', organizationJsonLd())
+    } else {
+      document.getElementById('jsonld-organization')?.remove()
+    }
+
     if (includeWebsiteSchema) {
       upsertJsonLd('jsonld-website', websiteJsonLd())
     } else {
       document.getElementById('jsonld-website')?.remove()
     }
-  }, [title, description, path, image, includeWebsiteSchema])
+  }, [
+    title,
+    description,
+    path,
+    image,
+    imageAlt,
+    robots,
+    includeWebsiteSchema,
+    includeOrganizationSchema,
+  ])
 
   return null
 }

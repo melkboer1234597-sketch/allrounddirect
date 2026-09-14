@@ -1,3 +1,17 @@
+export type RobotsDirective = 'index,follow' | 'noindex,nofollow'
+
+export type PageSeo = {
+  path: string
+  title: string
+  description: string
+  seoTitle: string
+  robots: RobotsDirective
+  /** Opnemen in sitemap.xml */
+  sitemap: boolean
+  changefreq?: 'daily' | 'weekly' | 'monthly'
+  priority?: number
+}
+
 export const SITE = {
   name: 'AllRound Direct',
   legalName: 'AllRound Direct',
@@ -21,6 +35,191 @@ export function canonicalUrl(pathname: string): string {
   const normalized = path === '/' ? '/' : path.replace(/\/+$/, '')
   return origin ? `${origin}${normalized}` : normalized
 }
+
+function page(
+  path: string,
+  title: string,
+  description: string,
+  options?: Partial<Pick<PageSeo, 'seoTitle' | 'robots' | 'sitemap' | 'changefreq' | 'priority'>>,
+): PageSeo {
+  const privatePage = options?.robots === 'noindex,nofollow'
+  return {
+    path,
+    title,
+    description,
+    seoTitle: options?.seoTitle ?? `${title} | ${SITE.name}`,
+    robots: options?.robots ?? 'index,follow',
+    sitemap: options?.sitemap ?? !privatePage,
+    changefreq: options?.changefreq ?? 'weekly',
+    priority: options?.priority ?? (path === '/' ? 1 : 0.7),
+  }
+}
+
+export const HOME_SEO: PageSeo = page('/', SITE.name, SITE.defaultDescription, {
+  seoTitle: SITE.defaultTitle,
+  priority: 1,
+  changefreq: 'weekly',
+})
+
+/** Publieke content- en servicelijnen. */
+export const PUBLIC_PAGES: PageSeo[] = [
+  page(
+    '/meubels',
+    'Meubels',
+    'Banken, tafels, stoelen en kasten voor thuis en zakelijke ruimtes bij AllRound Direct.',
+  ),
+  page(
+    '/vloeren',
+    'Vloeren',
+    'PVC, laminaat, parket en vloeraccessoires. Levering op het afleveradres. Montage via AllRoundKlussenbedrijf.',
+  ),
+  page(
+    '/keuken',
+    'Keuken',
+    'Keukenproducten en onderdelen voor particuliere en professionele keukens bij AllRound Direct.',
+  ),
+  page(
+    '/koelen-vriezen',
+    'Koelen & Vriezen',
+    'Koelkasten, vriezers en koelapparatuur voor thuis en professioneel gebruik.',
+  ),
+  page(
+    '/horeca',
+    'Horeca',
+    'Apparatuur, meubilair en inrichting voor horeca. Voor grotere aantallen is een offerte mogelijk.',
+  ),
+  page(
+    '/wonen',
+    'Wonen',
+    'Woonproducten voor interieur en dagelijks gebruik bij AllRound Direct.',
+  ),
+  page(
+    '/zakelijk',
+    'Zakelijk bestellen',
+    'Inkoop voor ondernemers, horeca en projecten. Voor grotere bestellingen maken we een offerte.',
+  ),
+  page(
+    '/outlet',
+    'Outlet',
+    'Geselecteerde producten en tijdelijke partijen. Beschikbaarheid verschilt per product en voorraad.',
+  ),
+  page(
+    '/over-ons',
+    'Over AllRound Direct',
+    'AllRound Direct is een Nederlandse webshop voor wonen, keuken, vloer, horeca en zakelijke inkoop. Producten worden geleverd.',
+  ),
+  page(
+    '/contact',
+    'Contact',
+    'Neem contact op met AllRound Direct over producten, levering of een zakelijke aanvraag.',
+  ),
+  page(
+    '/klantenservice',
+    'Klantenservice',
+    'Hulp bij bestellen, levering en retouren bij AllRound Direct.',
+  ),
+  page(
+    '/bezorgen',
+    'Bezorgen',
+    'Bestellingen worden geleverd op het opgegeven afleveradres. Levertijd kan per product en leverancier verschillen.',
+  ),
+  page(
+    '/retourneren',
+    'Retourneren',
+    'Informatie over retourneren en herroepingsrecht bij AllRound Direct.',
+  ),
+  page(
+    '/veelgestelde-vragen',
+    'Veelgestelde vragen',
+    'Vragen over bestellen, levering en zakelijke inkoop bij AllRound Direct.',
+  ),
+  page('/privacy', 'Privacy', 'Privacybeleid van AllRound Direct.'),
+  page('/cookies', 'Cookies', 'Cookiebeleid van AllRound Direct.'),
+  page('/algemene-voorwaarden', 'Algemene voorwaarden', 'Algemene voorwaarden van AllRound Direct.'),
+  page('/disclaimer', 'Disclaimer', 'Disclaimer van AllRound Direct.'),
+  page(
+    '/offerte',
+    'Offerte aanvragen',
+    'Vraag een offerte aan voor grotere aantallen, horeca of projecten bij AllRound Direct.',
+  ),
+  page(
+    '/projecten',
+    'Projecten',
+    'Inrichting en inkoop voor zakelijke projecten via AllRound Direct.',
+  ),
+  page(
+    '/montage',
+    'Montage',
+    'AllRound Direct levert producten. Voor vloerleggen of keukenplaatsing kunt u terecht bij AllRoundKlussenbedrijf.',
+  ),
+  page(
+    '/assortiment',
+    'Assortiment',
+    'Bekijk het assortiment meubels, vloeren, keuken, koelapparatuur en horeca van AllRound Direct.',
+  ),
+]
+
+/** Account, winkelwagen, zoekresultaten: niet indexeren. */
+export const PRIVATE_PAGES: PageSeo[] = [
+  page('/account', 'Account', 'Inloggen en accountbeheer bij AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
+  page('/favorieten', 'Favorieten', 'Opgeslagen producten bij AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
+  page('/winkelwagen', 'Winkelwagen', 'Winkelwagen van AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
+  page('/bestelling-volgen', 'Bestelling volgen', 'Status van een bestelling bij AllRound Direct.', {
+    robots: 'noindex,nofollow',
+    sitemap: false,
+  }),
+  page(
+    '/zoeken',
+    'Zoeken',
+    'Zoek in het assortiment van AllRound Direct.',
+    { robots: 'noindex,nofollow', sitemap: false },
+  ),
+]
+
+export const NOT_FOUND_SEO: PageSeo = page(
+  '/404',
+  'Pagina niet gevonden',
+  'Deze pagina bestaat niet. Ga terug naar de homepage van AllRound Direct.',
+  { robots: 'noindex,nofollow', sitemap: false, seoTitle: 'Pagina niet gevonden | AllRound Direct' },
+)
+
+export const ALL_STATIC_PAGES: PageSeo[] = [...PUBLIC_PAGES, ...PRIVATE_PAGES]
+
+const PAGE_BY_PATH = new Map(ALL_STATIC_PAGES.map((item) => [item.path, item]))
+
+export function getPageSeo(pathname: string): PageSeo | undefined {
+  const normalized = pathname === '/' ? '/' : pathname.replace(/\/+$/, '')
+  return PAGE_BY_PATH.get(normalized)
+}
+
+export const PLACEHOLDER_PATHS = ALL_STATIC_PAGES.map((item) => item.path.slice(1))
+
+export const SITEMAP_PATHS: Array<{ path: string; changefreq: string; priority: number }> = [
+  { path: '/', changefreq: 'weekly', priority: 1 },
+  ...PUBLIC_PAGES.map((item) => ({
+    path: item.path,
+    changefreq: item.changefreq ?? 'weekly',
+    priority: item.priority ?? 0.7,
+  })),
+]
+
+export const ROBOTS_DISALLOW = [
+  '/account',
+  '/favorieten',
+  '/winkelwagen',
+  '/bestelling-volgen',
+  '/zoeken',
+  '/admin',
+] as const
 
 export const NAV_CATEGORIES = [
   { label: 'Meubels', href: '/meubels' },
@@ -64,142 +263,3 @@ export const FOOTER_LEGAL = [
   { label: 'Algemene voorwaarden', href: '/algemene-voorwaarden' },
   { label: 'Disclaimer', href: '/disclaimer' },
 ] as const
-
-export const PLACEHOLDER_PAGES: Record<
-  string,
-  { title: string; description: string; seoTitle?: string }
-> = {
-  '/meubels': {
-    title: 'Meubels',
-    description:
-      'Banken, tafels, stoelen en kasten voor thuis en zakelijke ruimtes. Het assortiment wordt hier verder uitgewerkt.',
-    seoTitle: 'Meubels | AllRound Direct',
-  },
-  '/vloeren': {
-    title: 'Vloeren',
-    description:
-      'PVC, laminaat, parket en vloeraccessoires. Producten worden geleverd op het afleveradres. Montage kan via AllRoundKlussenbedrijf.',
-    seoTitle: 'Vloeren | AllRound Direct',
-  },
-  '/keuken': {
-    title: 'Keuken',
-    description:
-      'Keukenproducten en onderdelen voor particuliere en professionele keukens. Het aanbod volgt op deze pagina.',
-    seoTitle: 'Keuken | AllRound Direct',
-  },
-  '/koelen-vriezen': {
-    title: 'Koelen & Vriezen',
-    description: 'Koelkasten, vriezers en koelapparatuur voor thuis en professioneel gebruik.',
-    seoTitle: 'Koelen & Vriezen | AllRound Direct',
-  },
-  '/horeca': {
-    title: 'Horeca',
-    description:
-      'Apparatuur, meubilair en inrichting voor horeca. Voor grotere aantallen kunt u een offerte aanvragen.',
-    seoTitle: 'Horeca | AllRound Direct',
-  },
-  '/wonen': {
-    title: 'Wonen',
-    description:
-      'Woonproducten voor interieur en dagelijks gebruik. Het assortiment wordt hier verder ingevuld.',
-    seoTitle: 'Wonen | AllRound Direct',
-  },
-  '/zakelijk': {
-    title: 'Zakelijk bestellen',
-    description:
-      'Inkoop voor ondernemers, horeca en projecten. Voor grotere bestellingen maken we een passende offerte.',
-    seoTitle: 'Zakelijk bestellen | AllRound Direct',
-  },
-  '/outlet': {
-    title: 'Outlet',
-    description:
-      'Geselecteerde producten en tijdelijke partijen. Beschikbaarheid verschilt per product en voorraad.',
-    seoTitle: 'Outlet | AllRound Direct',
-  },
-  '/over-ons': {
-    title: 'Over AllRound Direct',
-    description:
-      'AllRound Direct is een Nederlandse webshop voor wonen, keuken, vloer, horeca en zakelijke inkoop. Producten worden geleverd, zonder fysieke showroom.',
-  },
-  '/contact': {
-    title: 'Contact',
-    description:
-      'Neem contact op voor vragen over producten, levering of een zakelijke aanvraag. Gegevens volgen.',
-  },
-  '/klantenservice': {
-    title: 'Klantenservice',
-    description:
-      'Hulp bij bestellen, levering en retouren. Uitgebreide informatie volgt op deze pagina.',
-  },
-  '/bezorgen': {
-    title: 'Bezorgen',
-    description:
-      'Bestellingen worden geleverd op het opgegeven afleveradres. Levertijd kan per product en leverancier verschillen.',
-  },
-  '/retourneren': {
-    title: 'Retourneren',
-    description:
-      'Informatie over retourneren en herroepingsrecht volgt hier. Tot die tijd kunt u contact opnemen.',
-  },
-  '/veelgestelde-vragen': {
-    title: 'Veelgestelde vragen',
-    description:
-      'Antwoorden over bestellen, levering en zakelijke inkoop. Deze pagina wordt later aangevuld.',
-  },
-  '/privacy': {
-    title: 'Privacy',
-    description: 'Hier komt het privacybeleid van AllRound Direct.',
-  },
-  '/cookies': {
-    title: 'Cookies',
-    description: 'Hier komt het cookiebeleid van AllRound Direct.',
-  },
-  '/algemene-voorwaarden': {
-    title: 'Algemene voorwaarden',
-    description: 'Hier komen de algemene voorwaarden van AllRound Direct.',
-  },
-  '/disclaimer': {
-    title: 'Disclaimer',
-    description: 'Hier komt de disclaimer van AllRound Direct.',
-  },
-  '/account': {
-    title: 'Account',
-    description: 'Inloggen en accountbeheer volgen in een volgende fase.',
-  },
-  '/favorieten': {
-    title: 'Favorieten',
-    description: 'Opgeslagen producten komen hier te staan zodra accounts beschikbaar zijn.',
-  },
-  '/winkelwagen': {
-    title: 'Winkelwagen',
-    description: 'Uw winkelwagen is leeg. Producten kunt u later vanaf de productpagina toevoegen.',
-  },
-  '/offerte': {
-    title: 'Offerte aanvragen',
-    description:
-      'Voor grotere aantallen, horeca en projecten maken we een offerte. Het aanvraagformulier volgt.',
-  },
-  '/projecten': {
-    title: 'Projecten',
-    description:
-      'Inrichting en inkoop voor zakelijke projecten. Neem contact op voor een aanvraag.',
-  },
-  '/montage': {
-    title: 'Montage',
-    description:
-      'AllRound Direct levert de producten. Voor het leggen van vloeren of plaatsing van keukenproducten kunnen wij u doorverwijzen naar AllRoundKlussenbedrijf.',
-  },
-  '/bestelling-volgen': {
-    title: 'Bestelling volgen',
-    description: 'Statusinformatie van bestellingen volgt wanneer orders via de webshop lopen.',
-  },
-  '/zoeken': {
-    title: 'Zoeken',
-    description:
-      'Zoekresultaten volgen wanneer het assortiment gekoppeld is. Gebruik de zoekbalk in de header.',
-  },
-  '/assortiment': {
-    title: 'Assortiment',
-    description: 'Het volledige assortiment wordt hier getoond zodra productdata beschikbaar is.',
-  },
-}

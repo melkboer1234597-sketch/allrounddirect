@@ -1,10 +1,16 @@
-import { DEMO_FEATURED_PRODUCTS } from '@/data/demo-products'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { SectionHeader } from '@/components/ui/SectionHeader'
+import { getFeaturedProducts } from '@/services/catalog'
 
 export function FeaturedProducts() {
+  const { data: products = [] } = useQuery({
+    queryKey: ['catalog', 'featured'],
+    queryFn: getFeaturedProducts,
+  })
+
   return (
     <section aria-labelledby="featured-heading" className="section-space">
       <Container>
@@ -18,7 +24,7 @@ export function FeaturedProducts() {
           }
         />
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {DEMO_FEATURED_PRODUCTS.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

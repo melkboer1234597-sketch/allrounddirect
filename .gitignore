@@ -42,3 +42,11 @@ dist-worker
 
 # OS
 Thumbs.db
+
+# SSH private keys must never be committed (keys live outside this repo)
+*_deploy
+*.pem
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
