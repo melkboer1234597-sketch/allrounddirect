@@ -101,6 +101,8 @@ export function AdminOrderDetailPage() {
   const [refundBusy, setRefundBusy] = useState(false)
   const [refundError, setRefundError] = useState('')
   const [refundOk, setRefundOk] = useState('')
+  const [emailBusy, setEmailBusy] = useState<string | null>(null)
+  const [emailMsg, setEmailMsg] = useState('')
 
   const order = data?.order as
     | {
@@ -163,6 +165,7 @@ export function AdminOrderDetailPage() {
     providerMessageId?: string | null
     errorCode?: string | null
     createdAt: string
+    sentAt?: string | null
   }>) ?? []
   const refundRows = (data?.refunds as Array<{
     id: string
@@ -407,6 +410,11 @@ export function AdminOrderDetailPage() {
 
           <section className="rounded-[8px] bg-white p-4 ring-1 ring-line">
             <h2 className="font-heading text-[16px] font-semibold text-navy">E-mail events</h2>
+            {emailMsg ? (
+              <p className="mt-2 text-[13px] text-muted" role="status">
+                {emailMsg}
+              </p>
+            ) : null}
             {emailEvents.length === 0 ? (
               <p className="mt-2 text-[13px] text-muted">Geen e-mail events.</p>
             ) : (
@@ -418,10 +426,53 @@ export function AdminOrderDetailPage() {
                     </p>
                     <p className="text-muted">
                       {event.recipient}
-                      {event.createdAt ? ` · ${new Date(event.createdAt).toLocaleString('nl-NL')}` : ''}
+                      {event.sentAt
+                        ? ` · verzonden ${new Date(event.sentAt).toLocaleString('nl-NL')}`
+                        : event.createdAt
+                          ? ` · ${new Date(event.createdAt).toLocaleString('nl-NL')}`
+                          : ''}
                     </p>
+                    {event.providerMessageId ? (
+                      <p className="font-mono text-[11px] text-muted">
+                        Resend: {event.providerMessageId}
+                      </p>
+                    ) : null}
                     {event.errorCode ? (
                       <p className="text-red-700">Fout: {event.errorCode}</p>
+                    ) : null}
+                    {event.status === 'failed' ? (
+                      <button
+                        type="button"
+                        className="mt-2 text-[12px] font-medium text-brand hover:underline disabled:opacity-50"
+                        disabled={emailBusy === event.id}
+                        onClick={() => {
+                          void (async () => {
+                            setEmailBusy(event.id)
+                            setEmailMsg('')
+                            try {
+                              const result = await adminFetch<{
+                                sent: boolean
+                                skipped?: boolean
+                                error?: string
+                              }>(`/orders/${id}/emails/${event.id}/retry`, { method: 'POST' })
+                              setEmailMsg(
+                                result.sent
+                                  ? 'E-mail opnieuw verzonden.'
+                                  : result.error || 'Opnieuw verzenden mislukt.',
+                              )
+                              await client.invalidateQueries({ queryKey: ['admin', 'order', id] })
+                            } catch (err) {
+                              setEmailMsg(
+                                err instanceof ApiError ? err.message : 'Opnieuw verzenden mislukt.',
+                              )
+                            } finally {
+                              setEmailBusy(null)
+                            }
+                          })()
+                        }}
+                      >
+                        {emailBusy === event.id ? 'Bezig…' : 'Opnieuw verzenden'}
+                      </button>
                     ) : null}
                   </li>
                 ))}

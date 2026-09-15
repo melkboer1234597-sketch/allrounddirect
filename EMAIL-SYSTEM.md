@@ -1,9 +1,9 @@
 # Transactional email system — AllRound Direct
 
 Provider: **Resend** (HTTP API, Cloudflare Workers-compatible).  
-No Resend SDK / Node-only dependencies.
+Official site origin: **https://allrounddirect.com**
 
-## Behaviour (chosen)
+## Behaviour
 
 For instant methods (iDEAL, Bancontact, cards, PayPal):
 
@@ -13,31 +13,49 @@ For instant methods (iDEAL, Bancontact, cards, PayPal):
 
 For pending methods (e.g. bank transfer):
 
-1. `ORDER_CREATED` with `awaitingPayment=true` → *We hebben uw bestelling ontvangen* (wacht op betaling)
+1. `ORDER_CREATED` with `awaitingPayment=true` → *We hebben uw bestelling ontvangen*
 2. When paid → same confirmation as above (idempotent key differs)
 
 Payment failed / canceled / expired → *Betaling voor bestelling … niet afgerond* with CTA “Betaling opnieuw proberen”.
 
 Checkout and webhooks **never fail** because Resend is missing or errors.
 
-## Cloudflare secrets (production)
+## Production sender
 
-Set with `wrangler secret put …` on worker `allrounddirect`:
+Configured via Worker vars (not secrets):
 
-| Secret | Purpose |
+| Var | Value |
 | --- | --- |
-| `RESEND_API_KEY` | Resend API key |
-| `EMAIL_FROM` | Verified sender, e.g. `AllRound Direct <noreply@your-domain.nl>` |
-| `EMAIL_REPLY_TO` | Optional reply-to address |
+| `EMAIL_FROM` | `AllRound Direct <bestellingen@allrounddirect.com>` |
+| `EMAIL_REPLY_TO` | `support@allrounddirect.com` |
 
-Also configure (vars or secrets):
+## Cloudflare secrets
+
+```bash
+npx wrangler secret put RESEND_API_KEY
+```
+
+Optional if you prefer secrets over vars for from/reply:
+
+```bash
+npx wrangler secret put EMAIL_FROM
+npx wrangler secret put EMAIL_REPLY_TO
+```
+
+Also ensure:
 
 | Name | Purpose |
 | --- | --- |
-| `SITE_URL` or `PUBLIC_SITE_URL` | Absolute origin for logo + CTA links |
-| `ENVIRONMENT` | `production` when live |
+| `SITE_URL` / `PUBLIC_SITE_URL` | `https://allrounddirect.com` |
+| `ENVIRONMENT` | `production` |
 
-Local `.dev.vars` / `.env.example` may leave `RESEND_API_KEY` empty.
+## Resend domain verification (Cloudflare DNS)
+
+In Resend → Domains → add `allrounddirect.com`.  
+Resend shows the exact SPF / DKIM / (optional) DMARC records to create.  
+**Do not invent DNS values** — copy them from the Resend dashboard into the Cloudflare DNS zone for `allrounddirect.com`.
+
+Until the domain is verified, Resend will reject sends from `bestellingen@allrounddirect.com`.
 
 ## Architecture
 
@@ -47,47 +65,30 @@ Local `.dev.vars` / `.env.example` may leave `RESEND_API_KEY` empty.
 | Lifecycle bridge | `worker/services/order-events.ts` → `emitOrderEvent` |
 | Templates | `worker/email/templates.ts` + `layout.ts` |
 | Template IDs | `shared/email-templates.ts` |
-| Idempotency | `email_events.event_key` UNIQUE (migration `0007_email_events.sql`) |
-| Attempt log | `email_logs` (no full body) |
-| Dev outbox | `dev_email_outbox` + `[EMAIL DEV]` console |
+| Idempotency | `email_events.event_key` UNIQUE |
+| Attempt log | `email_logs` |
+| Admin retry | `POST /api/admin/orders/:id/emails/:eventId/retry` |
 
-Named methods on `EmailService`:
-
-- `sendOrderConfirmation`
-- `sendPaymentFailed`
-- `sendOrderReceivedPending`
-- `sendShipmentNotification` (supports partial)
-- `sendDeliveryConfirmation`
-- `sendRefundConfirmation`
-- `sendCancelled`
-- `sendReturnRequested` / `sendReturnReceived`
-- `sendQuoteReceived`
-- `sendPasswordReset` / `sendEmailVerification`
-
-## Idempotency keys (examples)
+## Idempotency keys
 
 - `order:{uuid}:payment-confirmed`
-- `order:{uuid}:payment-failed`
+- `order:{uuid}:payment-failed:{paymentId}`
 - `order:{uuid}:shipment:{shipmentId}`
 - `order:{uuid}:delivered`
 - `quote:{id}:received`
 
 Duplicate Mollie webhooks do not resend mail.
 
-## Admin preview
+## Guest order CTA
 
-`/scotdejewish/email-preview`  
-API: `GET /api/admin/email-preview?template=order_confirmation`  
+Secure link:
 
-Staff-only, **blocked in production**. Fixture data only — never sends.
+`https://allrounddirect.com/bestelling/bevestiging?order=…&token=…`
 
-## Dev without Resend
+Logged-in:
 
-```
-[EMAIL DEV]
-template: order_confirmation
-recipient: sa***@example.com
-order: ARD-2026-000123
-```
+`https://allrounddirect.com/account/bestellingen/{orderNumber}`
 
-Message also stored in `dev_email_outbox` (peek via `GET /api/dev/emails?to=`).
+## Admin
+
+Order detail shows email template, recipient, status, Resend message id, sent time, and retry for failed events.

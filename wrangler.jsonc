@@ -12,6 +12,8 @@
     "BETTER_AUTH_URL": "https://allrounddirect.com",
     "SITE_URL": "https://allrounddirect.com",
     "PUBLIC_SITE_URL": "https://allrounddirect.com",
+    "EMAIL_FROM": "AllRound Direct <bestellingen@allrounddirect.com>",
+    "EMAIL_REPLY_TO": "support@allrounddirect.com",
     "MOLLIE_MODE": "test",
     "MOLLIE_ALLOW_LIVE": "false",
     "MOLLIE_BLOCK_LIVE_REFUNDS": "true"

@@ -59,6 +59,8 @@ export type EmailService = {
   sendQuoteReceived: (input: { to: string; quoteId: string }) => Promise<void>
   sendPasswordReset: (to: string, actionUrl: string) => Promise<void>
   sendEmailVerification: (to: string, actionUrl: string) => Promise<void>
+  /** Re-send a previously failed email event (new attempt; never duplicates a successful send). */
+  retryFailedEvent: (eventId: string) => Promise<{ sent: boolean; skipped?: boolean; error?: string }>
   preview: (template: EmailTemplateId) => { subject: string; html: string; text: string }
 }
 
@@ -96,13 +98,37 @@ function absoluteUrl(origin: string, path: string): string {
   return `${origin}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+function paymentMethodLabel(method?: string | null): string | undefined {
+  if (!method) return undefined
+  const labels: Record<string, string> = {
+    ideal: 'iDEAL',
+    bancontact: 'Bancontact',
+    creditcard: 'Creditcard',
+    paypal: 'PayPal',
+    banktransfer: 'Overboeking',
+    kbc: 'KBC/CBC',
+    belfius: 'Belfius',
+    applepay: 'Apple Pay',
+    klarna: 'Klarna',
+    in3: 'in3',
+  }
+  return labels[method.toLowerCase()] ?? method
+}
+
+function defaultFromAddress(env: AppEnv['Bindings']): string {
+  return (
+    env.EMAIL_FROM?.trim() ||
+    'AllRound Direct <bestellingen@allrounddirect.com>'
+  )
+}
+
 export function verificationEmail(origin: string, url: string) {
   const content = renderEmailTemplate('email_verification', origin, { actionUrl: url })
   return { ...content, type: 'verification' as const }
 }
 
-export function passwordResetEmail(url: string) {
-  const content = renderEmailTemplate('password_reset', 'https://localhost', { actionUrl: url })
+export function passwordResetEmail(origin: string, url: string) {
+  const content = renderEmailTemplate('password_reset', origin, { actionUrl: url })
   return { ...content, type: 'password_reset' as const }
 }
 
@@ -170,8 +196,8 @@ export function createEmailService(env: AppEnv['Bindings']): EmailService {
     }
 
     const content = renderEmailTemplate(input.template, origin, input.data ?? {}, input.order)
-    const from = env.EMAIL_FROM?.trim() || 'AllRound Direct <noreply@localhost>'
-    const replyTo = env.EMAIL_REPLY_TO?.trim()
+    const from = defaultFromAddress(env)
+    const replyTo = env.EMAIL_REPLY_TO?.trim() || 'support@allrounddirect.com'
     const resendKey = env.RESEND_API_KEY?.trim()
     const logId = newId()
     const db = createDb(env)
@@ -317,8 +343,6 @@ export function createEmailService(env: AppEnv['Bindings']): EmailService {
       ? `${origin}/account/bestellingen/${encodeURIComponent(order.orderNumber)}`
       : `${origin}/bestelling/bevestiging?order=${encodeURIComponent(order.orderNumber)}&token=${encodeURIComponent(order.confirmationToken)}`
 
-    const guestTrack = `${origin}/bestelling-volgen`
-
     return {
       to: order.guestEmail,
       order,
@@ -327,20 +351,25 @@ export function createEmailService(env: AppEnv['Bindings']): EmailService {
         orderNumber: order.orderNumber,
         orderDateLabel: formatDateNl(order.placedAt),
         statusText: order.paymentStatus === 'paid' ? 'Betaling ontvangen' : order.status,
-        paymentMethod: order.paymentMethod || payment?.method || undefined,
+        paymentMethod: paymentMethodLabel(order.paymentMethod || payment?.method),
         shippingAddress: shipping,
         subtotalCents: order.subtotalCents,
         shippingCents: order.shippingCents,
-        shippingLabel: order.shippingCents > 0 ? undefined : 'Volgens leverancier',
+        shippingLabel: order.shippingCents > 0 ? undefined : 'Gratis',
         vatCents: order.vatCents,
         totalCents: order.totalCents,
-        actionUrl: order.userId ? trackUrl : guestTrack,
+        actionUrl: trackUrl,
         items: items.map((item) => ({
           name: item.name,
           quantity: item.quantity,
           lineTotalCents: item.lineTotalCents,
           imageUrl: item.imageRef
-            ? absoluteUrl(origin, item.imageRef.startsWith('http') || item.imageRef.startsWith('/') ? item.imageRef : mediaPublicPath(item.imageRef))
+            ? absoluteUrl(
+                origin,
+                item.imageRef.startsWith('http') || item.imageRef.startsWith('/')
+                  ? item.imageRef
+                  : mediaPublicPath(item.imageRef),
+              )
             : null,
         })),
       },
@@ -472,6 +501,42 @@ export function createEmailService(env: AppEnv['Bindings']): EmailService {
         to,
         data: { actionUrl },
         eventKey: `auth:email_verification:${to.trim().toLowerCase()}:${actionUrl}`,
+      })
+    },
+    async retryFailedEvent(eventId) {
+      const db = createDb(env)
+      const row = (
+        await db.select().from(emailEvents).where(eq(emailEvents.id, eventId)).limit(1)
+      )[0]
+      if (!row) return { sent: false, error: 'E-mail event niet gevonden.' }
+      if (row.status === 'sent') {
+        return { sent: false, skipped: true, error: 'Dit event is al verzonden.' }
+      }
+      if (!row.orderId) {
+        return { sent: false, error: 'Alleen order-e-mails kunnen opnieuw worden verzonden.' }
+      }
+
+      // Allow a fresh attempt: clear the failed row's uniqueness by renaming the key,
+      // then send with a retry-suffixed key so successful originals stay unique.
+      const retryKey = `${row.eventKey}:retry:${Date.now()}`
+      const template = row.template as EmailTemplateId
+      const loaded = await loadOrderEmailData(row.orderId)
+      if (!loaded) return { sent: false, error: 'Order niet gevonden.' }
+
+      // Mark old failed event as superseded (keep audit trail).
+      await db
+        .update(emailEvents)
+        .set({ status: 'superseded', errorCode: row.errorCode ?? 'retry_requested' })
+        .where(eq(emailEvents.id, eventId))
+
+      return send({
+        template,
+        to: row.recipient,
+        order: loaded.data,
+        orderId: row.orderId,
+        eventKey: retryKey,
+        related: { type: 'order', id: row.orderId },
+        data: { orderNumber: loaded.order.orderNumber, firstName: loaded.data.firstName ?? '' },
       })
     },
     preview(template) {

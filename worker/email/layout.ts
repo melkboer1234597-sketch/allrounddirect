@@ -12,7 +12,7 @@ export function transactionalLayout(input: {
   actionUrl?: string
   actionLabel?: string
 }): string {
-  const logo = `${input.origin}/media/branding/allround-direct-logo-horizontal-compact.png`
+  const logo = `${input.origin}/media/branding/allround-direct-logo-white.png`
   const button = input.actionUrl
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr><td style="border-radius:8px;background:${BRAND}"><a href="${escapeHtml(input.actionUrl)}" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">${escapeHtml(input.actionLabel ?? 'Openen')}</a></td></tr></table>`
     : ''
@@ -126,7 +126,7 @@ export function renderTotalsBlock(input: {
 }): string {
   const shipping =
     input.shippingLabel ??
-    (input.shippingCents > 0 ? formatCentsEmail(input.shippingCents) : 'Volgens leverancier')
+    (input.shippingCents > 0 ? formatCentsEmail(input.shippingCents) : 'Gratis')
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0;font-size:14px">
     <tr><td style="padding:4px 0;color:${MUTED}">Subtotaal</td><td style="padding:4px 0;text-align:right">${escapeHtml(formatCentsEmail(input.subtotalCents))}</td></tr>
     <tr><td style="padding:4px 0;color:${MUTED}">Bezorging</td><td style="padding:4px 0;text-align:right">${escapeHtml(shipping)}</td></tr>

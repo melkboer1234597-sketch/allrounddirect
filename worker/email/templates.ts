@@ -311,10 +311,10 @@ export function fixtureOrderEmailData(origin: string): OrderEmailData {
     shippingAddress: 'Sara Jansen\nVoorbeeldstraat 12\n1234 AB Amsterdam\nNederland',
     subtotalCents: 18789,
     shippingCents: 0,
-    shippingLabel: 'Volgens leverancier',
+    shippingLabel: 'Gratis',
     vatCents: 3260,
     totalCents: 18789,
-    actionUrl: `${origin}/bestelling-volgen`,
+    actionUrl: `${origin}/bestelling/bevestiging?order=ARD-2026-000123&token=demo`,
     items: [
       {
         name: 'Wicanders kurkvloer om te klikken',

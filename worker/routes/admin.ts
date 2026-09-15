@@ -820,6 +820,29 @@ adminRoutes.get('/orders/:id', async (c) => {
   })
 })
 
+adminRoutes.post('/orders/:id/emails/:eventId/retry', async (c) => {
+  const { staff, response } = await requireStaff(c, 'orders.write')
+  if (!staff) return response
+  const orderId = c.req.param('id')
+  const eventId = c.req.param('eventId')
+  const db = createDb(c.env)
+  const event = (
+    await db.select().from(emailEvents).where(eq(emailEvents.id, eventId)).limit(1)
+  )[0]
+  if (!event || (event.orderId && event.orderId !== orderId)) {
+    return c.json({ error: 'E-mail event niet gevonden.' }, 404)
+  }
+  const { createEmailService } = await import('../services/email')
+  const result = await createEmailService(c.env).retryFailedEvent(eventId)
+  await writeAudit(db, staff, {
+    action: 'email.retry',
+    entity: 'email_event',
+    entityId: eventId,
+    summary: `E-mail opnieuw geprobeerd (${event.template})`,
+  })
+  return c.json(result)
+})
+
 adminRoutes.patch('/orders/:id/status', async (c) => {
   const { staff, response } = await requireStaff(c, 'orders.write')
   if (!staff) return response
