@@ -46,11 +46,10 @@ No separate Cloudflare Pages production site was created.
 |------|--------|
 | Local branch | `main` |
 | Remote | `git@github.com:melkboer1234597-sketch/allrounddirect.git` |
-| Pre-push HEAD | `6cc2a20` (matched `origin/main`) |
+| GIT LOCAL HEAD | `2a6ad88` — *Prepare AllRound Direct for allrounddirect.com production* |
+| GITHUB ORIGIN HEAD | `2a6ad88` (synchronized; push via SSH succeeded) |
 | Auth identity (SSH) | `rooiekabel/kebbers` |
-| `gh auth` | Not logged in |
-
-Push result is recorded in the final status block after the commit/push attempt in this session.
+| `gh auth` | Not logged in (SSH used instead) |
 
 ## Cloudflare auth blocker
 
