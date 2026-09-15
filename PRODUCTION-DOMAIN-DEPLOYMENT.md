@@ -46,8 +46,8 @@ No separate Cloudflare Pages production site was created.
 |------|--------|
 | Local branch | `main` |
 | Remote | `git@github.com:melkboer1234597-sketch/allrounddirect.git` |
-| GIT LOCAL HEAD | `2a6ad88` — *Prepare AllRound Direct for allrounddirect.com production* |
-| GITHUB ORIGIN HEAD | `2a6ad88` (synchronized; push via SSH succeeded) |
+| GIT LOCAL HEAD | `5428c23` — *Document production cutover blockers and synced git heads* (includes production commit `2a6ad88`) |
+| GITHUB ORIGIN HEAD | `5428c23` (synchronized; push via SSH succeeded) |
 | Auth identity (SSH) | `rooiekabel/kebbers` |
 | `gh auth` | Not logged in (SSH used instead) |
 
