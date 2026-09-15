@@ -20,6 +20,7 @@ import { isDevelopment } from '../lib/request'
 import { createPaymentsService } from './mollie'
 import { nextOrderNumber } from './order-numbers'
 import { emitOrderEvent } from './order-events'
+import { loadShippingSettings } from './shipping-settings'
 
 export type CheckoutAddress = {
   firstName: string
@@ -187,11 +188,13 @@ export async function quoteCheckout(
   const items = await resolveCartLines(env, input.lines)
   const subtotalCents = items.reduce((sum, item) => sum + item.lineTotalCents, 0)
   const vatCents = items.reduce((sum, item) => sum + item.vatCents, 0)
+  const shippingSettings = await loadShippingSettings(env)
   const delivery = resolveShippingCents(
     input.deliveryMethodId,
     input.country,
     subtotalCents,
     isDevelopment(env) ? 'development' : 'production',
+    shippingSettings.standard,
   )
   const discountCents = 0
   const totalCents = addCents(subtotalCents, delivery.shippingCents, -discountCents)
@@ -205,6 +208,7 @@ export async function quoteCheckout(
     shippingPriceKnown: delivery.priceKnown,
     freeShipping: delivery.freeShipping,
     shippingConfigured: delivery.shippingConfigured,
+    shippingReleaseBlocker: shippingSettings.releaseBlocker,
     rateSource: delivery.rateSource,
     deliveryMethod: {
       id: delivery.method.id,

@@ -47,6 +47,10 @@ import {
 } from '../services/refunds'
 import { MollieConfigError } from '../services/mollie'
 import {
+  loadShippingSettings,
+  SHIPPING_RATES_CONTENT_KEY,
+} from '../services/shipping-settings'
+import {
   PRODUCT_STATUSES,
   QUOTE_STATUSES,
   RETURN_STATUSES,
@@ -1441,14 +1445,71 @@ function extFromName(name: string) {
 adminRoutes.get('/settings', async (c) => {
   const { staff, response } = await requireStaff(c, 'settings.write')
   if (!staff) return response
+  const shipping = await loadShippingSettings(c.env)
   return c.json({
     settings: {
       twoFactor: {
         enabled: false,
         note: 'Better Auth twoFactor (TOTP) plugin later koppelen. Geen custom TOTP.',
       },
+      shipping: {
+        standardCents: shipping.standard,
+        future: shipping.future,
+        source: shipping.source,
+        configured: shipping.configured,
+        releaseBlocker: shipping.releaseBlocker,
+        freeShippingThresholdCents: 99_900,
+      },
     },
   })
+})
+
+adminRoutes.put('/settings/shipping', async (c) => {
+  const { staff, response } = await requireStaff(c, 'settings.write')
+  if (!staff) return response
+  const body = z
+    .object({
+      NL: z.number().int().min(0).max(1_000_000).nullable(),
+      BE: z.number().int().min(0).max(1_000_000).nullable(),
+      largeFreightCents: z.number().int().min(0).max(1_000_000).nullable().optional(),
+      supplierDirectCents: z.number().int().min(0).max(1_000_000).nullable().optional(),
+      palletDeliveryCents: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    })
+    .safeParse(await c.req.json())
+  if (!body.success) return c.json({ error: 'Ongeldige verzendtarieven.' }, 400)
+
+  const db = createDb(c.env)
+  const now = new Date()
+  const value = {
+    NL: body.data.NL,
+    BE: body.data.BE,
+    largeFreightCents: body.data.largeFreightCents ?? null,
+    supplierDirectCents: body.data.supplierDirectCents ?? null,
+    palletDeliveryCents: body.data.palletDeliveryCents ?? null,
+  }
+  await db
+    .insert(siteContent)
+    .values({
+      key: SHIPPING_RATES_CONTENT_KEY,
+      valueJson: JSON.stringify(value),
+      updatedAt: now,
+      updatedBy: staff.userId,
+    })
+    .onConflictDoUpdate({
+      target: siteContent.key,
+      set: {
+        valueJson: JSON.stringify(value),
+        updatedAt: now,
+        updatedBy: staff.userId,
+      },
+    })
+  await writeAudit(db, staff, {
+    action: 'settings.change',
+    entity: 'shipping',
+    summary: `Verzendtarieven bijgewerkt (NL=${value.NL ?? 'null'}, BE=${value.BE ?? 'null'})`,
+  })
+  const shipping = await loadShippingSettings(c.env)
+  return c.json({ ok: true, shipping })
 })
 
 /** Development/test only — HTML preview of transactional templates (no send). */

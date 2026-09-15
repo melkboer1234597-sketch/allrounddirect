@@ -20,5 +20,8 @@ export type AppEnv = {
     MOLLIE_ALLOW_LIVE?: string
     /** When true, refuse any live Mollie refund (CI / automated tests). */
     MOLLIE_BLOCK_LIVE_REFUNDS?: string
+    /** Production standard shipping (cents). Admin/site_content can also set these. */
+    SHIPPING_STANDARD_NL_CENTS?: string
+    SHIPPING_STANDARD_BE_CENTS?: string
   }
 }

@@ -16,10 +16,18 @@ type Status = {
   uiState: Exclude<UiState, 'CHECKING'>
   paymentMethod?: string | null
   totalCents: number
+  shippingCents?: number
+  subtotalCents?: number
   currency: string
   email?: string
   shippingAddress?: string[]
   estimatedDelivery?: string | null
+  items?: Array<{
+    name: string
+    quantity: number
+    lineTotalCents: number
+    imageRef?: string | null
+  }>
   hasAccount?: boolean
   canRetry?: boolean
 }
@@ -194,6 +202,33 @@ export function OrderConfirmationPage() {
                 Ordernummer {data.orderNumber}
               </p>
 
+              {data.items?.length ? (
+                <ul className="space-y-3 rounded-[12px] bg-surface p-4">
+                  {data.items.map((item, index) => (
+                    <li key={`${item.name}-${index}`} className="flex gap-3 text-[14px]">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-white">
+                        {item.imageRef ? (
+                          <img
+                            src={item.imageRef}
+                            alt=""
+                            width={56}
+                            height={56}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-ink">{item.name}</p>
+                        <p className="mt-0.5 text-[12px] text-muted">Aantal {item.quantity}</p>
+                      </div>
+                      <p className="shrink-0 font-medium text-ink">
+                        {formatCentsNl(item.lineTotalCents, data.currency)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
               <dl className="divide-y divide-line rounded-[12px] bg-surface text-[14px]">
                 {data.email ? (
                   <div className="flex justify-between gap-4 px-4 py-3">
@@ -211,7 +246,7 @@ export function OrderConfirmationPage() {
                 ) : null}
                 {data.estimatedDelivery ? (
                   <div className="flex justify-between gap-4 px-4 py-3">
-                    <dt className="text-muted">Geschatte levering</dt>
+                    <dt className="text-muted">Levering</dt>
                     <dd className="text-right text-ink">{data.estimatedDelivery}</dd>
                   </div>
                 ) : null}
@@ -221,9 +256,27 @@ export function OrderConfirmationPage() {
                     <dd className="text-right text-ink">{methodLabel(data.paymentMethod)}</dd>
                   </div>
                 ) : null}
+                {typeof data.subtotalCents === 'number' ? (
+                  <div className="flex justify-between gap-4 px-4 py-3">
+                    <dt className="text-muted">Subtotaal</dt>
+                    <dd className="text-right text-ink">
+                      {formatCentsNl(data.subtotalCents, data.currency)}
+                    </dd>
+                  </div>
+                ) : null}
+                {typeof data.shippingCents === 'number' ? (
+                  <div className="flex justify-between gap-4 px-4 py-3">
+                    <dt className="text-muted">Bezorging</dt>
+                    <dd className="text-right text-ink">
+                      {data.shippingCents === 0
+                        ? 'Gratis'
+                        : formatCentsNl(data.shippingCents, data.currency)}
+                    </dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-4 px-4 py-3">
                   <dt className="text-muted">Totaal</dt>
-                  <dd className="text-right font-semibold text-ink">
+                  <dd className="text-right text-[16px] font-semibold text-navy">
                     {formatCentsNl(data.totalCents, data.currency)}
                   </dd>
                 </div>
@@ -235,6 +288,18 @@ export function OrderConfirmationPage() {
                   Verder winkelen
                 </Button>
               </div>
+              {!data.hasAccount ? (
+                <p className="text-[14px] text-muted">
+                  Gastbestelling · bewaar uw orderlink om de status te volgen.{' '}
+                  <Link
+                    to="/account/registreren"
+                    className="text-brand underline-offset-2 hover:underline"
+                  >
+                    Account aanmaken
+                  </Link>{' '}
+                  (optioneel).
+                </p>
+              ) : null}
             </section>
           ) : null}
 
@@ -247,7 +312,7 @@ export function OrderConfirmationPage() {
               {data.canRetry ? (
                 <div className="mt-5">
                   <Button type="button" onClick={() => void retry()} disabled={retrying}>
-                    {retrying ? 'Bezig…' : 'Opnieuw betalen'}
+                    {retrying ? 'Bezig…' : 'Betaling opnieuw proberen'}
                   </Button>
                 </div>
               ) : null}

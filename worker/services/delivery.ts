@@ -1,6 +1,6 @@
 /**
  * Shipping resolution — free shipping from official commerce threshold.
- * Production rates come from shippingConfig (env-overridable).
+ * Production rates: env / admin site_content (never invent silently).
  * Development-only fallbacks are explicit and never silently used in production.
  */
 import type { CheckoutCountry } from '../../shared/checkout'
@@ -12,6 +12,7 @@ import {
   shippingConfig,
   type ShippingResolutionMode,
 } from '../../shared/commerce'
+import type { StandardShippingRates } from './shipping-settings'
 
 export type DeliveryMethod = {
   id: string
@@ -29,21 +30,35 @@ export function buildDeliveryMethods(): DeliveryMethod[] {
       id: 'standard_nl_be',
       label: 'Bezorging op adres',
       description: deliveryLabelFull(),
-      amountCents: null, // resolved per country via shippingConfig
+      amountCents: null,
       countries: ['NL', 'BE'],
       kind: 'parcel',
     },
   ]
 }
 
+function resolveCountryRate(
+  country: CheckoutCountry,
+  mode: ShippingResolutionMode,
+  overrides?: StandardShippingRates | null,
+): { cents: number | null; source: string } {
+  const override = overrides?.[country]
+  if (override != null && Number.isInteger(override) && override >= 0) {
+    return { cents: override, source: 'configured' }
+  }
+  const resolved = resolveStandardShippingCents(country, mode)
+  return { cents: resolved.cents, source: resolved.source }
+}
+
 export function deliveryMethodsForCountry(
   country: CheckoutCountry,
   mode: ShippingResolutionMode = 'production',
+  overrides?: StandardShippingRates | null,
 ): Array<DeliveryMethod & { amountCents: number | null; rateSource: string }> {
   return buildDeliveryMethods()
     .filter((method) => method.countries.includes(country))
     .map((method) => {
-      const resolved = resolveStandardShippingCents(country, mode)
+      const resolved = resolveCountryRate(country, mode, overrides)
       return {
         ...method,
         amountCents: resolved.cents,
@@ -61,6 +76,7 @@ export function resolveShippingCents(
    */
   eligibleMerchandiseSubtotalCents = 0,
   mode: ShippingResolutionMode = 'production',
+  overrides?: StandardShippingRates | null,
 ): {
   method: DeliveryMethod
   shippingCents: number
@@ -69,7 +85,7 @@ export function resolveShippingCents(
   rateSource: string
   shippingConfigured: boolean
 } {
-  const methods = deliveryMethodsForCountry(country, mode)
+  const methods = deliveryMethodsForCountry(country, mode, overrides)
   const method = methods.find((item) => item.id === methodId) ?? methods[0]
   if (!method) {
     throw new Error('Geen bezorgoptie beschikbaar voor dit land.')
@@ -86,7 +102,7 @@ export function resolveShippingCents(
     }
   }
 
-  const resolved = resolveStandardShippingCents(country, mode)
+  const resolved = resolveCountryRate(country, mode, overrides)
   if (resolved.cents == null) {
     return {
       method,
@@ -108,10 +124,16 @@ export function resolveShippingCents(
   }
 }
 
-export function shippingDiagnostics(mode: ShippingResolutionMode) {
+export function shippingDiagnostics(
+  mode: ShippingResolutionMode,
+  overrides?: StandardShippingRates | null,
+) {
   return {
     thresholdCents: commerceConfig.freeShippingThresholdCents,
-    productionRates: shippingConfig.standardShippingCents,
+    productionRates: {
+      NL: overrides?.NL ?? shippingConfig.standardShippingCents.NL,
+      BE: overrides?.BE ?? shippingConfig.standardShippingCents.BE,
+    },
     developmentFallbackCents: shippingConfig.developmentFallbackCents,
     mode,
     note:

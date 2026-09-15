@@ -18,7 +18,7 @@ import {
   normalizePostalCode,
   type CheckoutCountry,
 } from '../../shared/checkout'
-import { deliveryLabelShort, freeShippingThresholdLabel } from '../../shared/commerce'
+import { freeShippingThresholdLabel } from '../../shared/commerce'
 
 type AddressForm = {
   firstName: string
@@ -56,6 +56,8 @@ type CheckoutContext = {
   paymentMethodsError?: string | null
   preferredPaymentMethodId?: string
   freeShippingLabel?: string
+  shippingConfigured?: boolean
+  shippingReleaseBlocker?: string | null
   mollie: { label: string; mode: string; configured: boolean; isMock?: boolean }
   prefill: {
     email?: string
@@ -84,6 +86,7 @@ type QuoteResult = {
   shippingPriceKnown: boolean
   freeShipping?: boolean
   shippingConfigured?: boolean
+  shippingReleaseBlocker?: string | null
   rateSource?: string
   deliveryMethod: { id: string; label: string; description: string }
 }
@@ -124,6 +127,7 @@ export function CheckoutPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [customerType, setCustomerType] = useState<'consumer' | 'business'>('consumer')
+  const [vatNumber, setVatNumber] = useState('')
   const [shipping, setShipping] = useState<AddressForm>(emptyAddress('NL'))
   const [billing, setBilling] = useState<AddressForm>(emptyAddress('NL'))
   const [sameBilling, setSameBilling] = useState(true)
@@ -443,7 +447,7 @@ export function CheckoutPage() {
                 </p>
               ) : null}
 
-              <Section title="Contact">
+              <Section title="Contactgegevens">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
                     id="firstName"
@@ -508,6 +512,7 @@ export function CheckoutPage() {
                       <input
                         type="radio"
                         name="customerType"
+                        className="h-4 w-4"
                         checked={customerType === 'consumer'}
                         onChange={() => setCustomerType('consumer')}
                       />
@@ -517,6 +522,7 @@ export function CheckoutPage() {
                       <input
                         type="radio"
                         name="customerType"
+                        className="h-4 w-4"
                         checked={customerType === 'business'}
                         onChange={() => setCustomerType('business')}
                       />
@@ -524,6 +530,17 @@ export function CheckoutPage() {
                     </label>
                   </div>
                 </fieldset>
+                {customerType === 'business' ? (
+                  <Field
+                    id="vatNumber"
+                    label="BTW-nummer"
+                    optional
+                    autoComplete="off"
+                    value={vatNumber}
+                    hint="Optioneel voor zakelijke bestellingen"
+                    onChange={setVatNumber}
+                  />
+                ) : null}
               </Section>
 
               <Section title="Afleveradres">
@@ -559,8 +576,8 @@ export function CheckoutPage() {
                 <div className="grid grid-cols-[1fr_0.85fr] gap-3 sm:grid-cols-[140px_1fr]">
                   <Field
                     id="houseNumber"
-                    label="Huisnr."
-                    autoComplete="off"
+                    label="Huisnummer"
+                    autoComplete="address-line2"
                     value={shipping.houseNumber}
                     error={errors.houseNumber}
                     onChange={(v) => {
@@ -711,7 +728,7 @@ export function CheckoutPage() {
                     </button>
                   </div>
                 ) : !(context.data?.deliveryMethods?.length) ? (
-                  <div className="rounded-[8px] border border-line bg-surface px-3 py-3">
+                  <div className="rounded-[8px] border border-amber-200 bg-amber-50 px-3 py-3">
                     <p className="text-[14px] text-ink">Geen bezorgopties beschikbaar voor dit land.</p>
                     <button
                       type="button"
@@ -725,18 +742,22 @@ export function CheckoutPage() {
                   <div className="space-y-2">
                     {(context.data?.deliveryMethods ?? []).map((method) => {
                       const selected = deliveryMethodId === method.id
+                      const shippingMissing =
+                        !quote.data?.freeShipping &&
+                        quote.data?.shippingConfigured === false &&
+                        !method.priceKnown
                       const priceLabel = quote.data?.freeShipping
                         ? 'Gratis'
                         : quote.data?.shippingPriceKnown
                           ? formatCentsNl(quote.data.shippingCents)
                           : method.priceKnown && method.amountCents != null
                             ? formatCentsNl(method.amountCents)
-                            : 'Wordt berekend'
+                            : 'Tarief ontbreekt'
                       return (
                         <label
                           key={method.id}
                           className={cn(
-                            'flex cursor-pointer items-start gap-3 rounded-[8px] border px-3 py-2.5 transition-colors',
+                            'flex cursor-pointer items-start gap-3 rounded-[8px] border px-3 py-3 transition-colors',
                             selected
                               ? 'border-brand bg-brand/[0.04]'
                               : 'border-line bg-white hover:border-navy/20',
@@ -745,7 +766,7 @@ export function CheckoutPage() {
                           <input
                             type="radio"
                             name="delivery"
-                            className="mt-1"
+                            className="mt-1 h-4 w-4"
                             checked={selected}
                             onChange={() => setDeliveryMethodId(method.id)}
                           />
@@ -757,20 +778,38 @@ export function CheckoutPage() {
                           <span className="min-w-0 flex-1">
                             <span className="flex items-start justify-between gap-3">
                               <span className="text-[14px] font-medium text-ink">{method.label}</span>
-                              <span className="shrink-0 text-[14px] font-semibold text-ink">
+                              <span
+                                className={cn(
+                                  'shrink-0 text-[14px] font-semibold',
+                                  shippingMissing ? 'text-amber-800' : 'text-ink',
+                                )}
+                              >
                                 {priceLabel}
                               </span>
                             </span>
                             <span className="mt-0.5 block text-[13px] text-muted">
-                              {method.deliveryTime || deliveryLabelShort()}
+                              Levering binnen 1 tot 3 werkdagen
                             </span>
                           </span>
                         </label>
                       )
                     })}
-                    <p className="pt-1 text-[12px] text-muted">
-                      {context.data?.freeShippingLabel || freeShippingThresholdLabel()}
-                    </p>
+                    {context.data?.shippingReleaseBlocker &&
+                    quote.data &&
+                    !quote.data.freeShipping &&
+                    quote.data.shippingConfigured === false ? (
+                      <p
+                        className="rounded-[8px] bg-amber-50 px-3 py-2 text-[13px] text-amber-950"
+                        role="status"
+                      >
+                        Verzendtarief is nog niet vastgelegd. Afrekenen is geblokkeerd tot NL/BE-tarieven
+                        zijn ingesteld.
+                      </p>
+                    ) : (
+                      <p className="pt-1 text-[12px] text-muted">
+                        {context.data?.freeShippingLabel || freeShippingThresholdLabel()}
+                      </p>
+                    )}
                   </div>
                 )}
               </Section>
@@ -867,10 +906,10 @@ export function CheckoutPage() {
                 )}
               </Section>
 
-              <Section title="Controleren">
+              <Section title="Bestelling controleren">
                 <div className="space-y-4 text-[14px]">
                   <ReviewBlock
-                    title="Contact"
+                    title="Contactgegevens"
                     onEdit={() =>
                       scrollToElement(document.querySelector('[data-field="email"]'), {
                         behavior: 'smooth',
@@ -953,7 +992,16 @@ export function CheckoutPage() {
                 <div className="mt-6">
                   <button
                     type="button"
-                    disabled={submitting || quote.isError}
+                    disabled={
+                      submitting ||
+                      quote.isError ||
+                      Boolean(
+                        quote.data &&
+                          !quote.data.freeShipping &&
+                          quote.data.shippingConfigured === false,
+                      ) ||
+                      !(context.data?.paymentMethods?.length)
+                    }
                     onClick={() => void placeOrder()}
                     className="inline-flex h-[50px] w-full items-center justify-center rounded-[9px] bg-brand px-6 text-[15px] font-medium text-white transition-colors hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:min-w-[280px]"
                   >
@@ -1072,10 +1120,12 @@ function OrderSummaryBody({
           <dt className="text-muted">Bezorging</dt>
           <dd>
             {quote?.freeShipping
-              ? 'Gratis verzending'
+              ? 'Gratis'
               : quote?.shippingPriceKnown
                 ? formatCentsNl(quote.shippingCents)
-                : 'Wordt berekend'}
+                : quote?.shippingConfigured === false
+                  ? 'Tarief ontbreekt'
+                  : '—'}
           </dd>
         </div>
         <div className="flex justify-between gap-3">

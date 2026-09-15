@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { SeoHead } from '@/components/seo/SeoHead'
@@ -1175,17 +1175,137 @@ export function AdminAuditPage() {
 }
 
 export function AdminSettingsPage() {
-  const { data } = useQuery({
+  const queryClient = useQueryClient()
+  const { data, isLoading } = useQuery({
     queryKey: ['admin', 'settings'],
     queryFn: () =>
-      adminFetch<{ settings: { twoFactor: { enabled: boolean; note: string } } }>('/settings'),
+      adminFetch<{
+        settings: {
+          twoFactor: { enabled: boolean; note: string }
+          shipping: {
+            standardCents: { NL: number | null; BE: number | null }
+            future: {
+              largeFreightCents: number | null
+              supplierDirectCents: number | null
+              palletDeliveryCents: number | null
+            }
+            configured: boolean
+            releaseBlocker: string | null
+            freeShippingThresholdCents: number
+            source: string
+          }
+        }
+      }>('/settings'),
     retry: false,
   })
+  const shipping = data?.settings.shipping
+  const [nl, setNl] = useState('')
+  const [be, setBe] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!shipping) return
+    setNl(shipping.standardCents.NL == null ? '' : String(shipping.standardCents.NL))
+    setBe(shipping.standardCents.BE == null ? '' : String(shipping.standardCents.BE))
+  }, [shipping])
+
+  async function saveShipping() {
+    setSaving(true)
+    setMessage('')
+    setError('')
+    try {
+      const parse = (raw: string) => {
+        const trimmed = raw.trim()
+        if (!trimmed) return null
+        const n = Number(trimmed)
+        if (!Number.isInteger(n) || n < 0) throw new Error('Gebruik hele centen (bijv. 695).')
+        return n
+      }
+      await adminFetch('/settings/shipping', {
+        method: 'PUT',
+        body: JSON.stringify({
+          NL: parse(nl),
+          BE: parse(be),
+          largeFreightCents: shipping?.future.largeFreightCents ?? null,
+          supplierDirectCents: shipping?.future.supplierDirectCents ?? null,
+          palletDeliveryCents: shipping?.future.palletDeliveryCents ?? null,
+        }),
+      })
+      setMessage('Verzendtarieven opgeslagen.')
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Opslaan mislukt.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <Head title="Instellingen" path="/scotdejewish/settings" />
       <h1 className="font-heading text-[24px] font-semibold text-navy">Instellingen</h1>
-      <p className="mt-3 max-w-xl text-[14px]">{data?.settings.twoFactor.note}</p>
+      <p className="mt-3 max-w-xl text-[14px] text-muted">{data?.settings.twoFactor.note}</p>
+
+      <section className="mt-8 max-w-xl rounded-[10px] bg-white p-5 ring-1 ring-line">
+        <h2 className="font-heading text-[18px] font-semibold text-navy">Verzendtarieven</h2>
+        <p className="mt-2 text-[14px] text-muted">
+          Standaard verzending NL/BE in centen. Gratis verzending vanaf{' '}
+          {shipping ? (shipping.freeShippingThresholdCents / 100).toFixed(2) : '999,00'} euro
+          merchandise-subtotaal. Leeg laten = niet geconfigureerd (release blocker in productie).
+        </p>
+        {shipping?.releaseBlocker ? (
+          <p className="mt-3 rounded-[8px] bg-amber-50 px-3 py-2 text-[13px] text-amber-950" role="status">
+            {shipping.releaseBlocker}
+          </p>
+        ) : null}
+        {isLoading ? <p className="mt-4 text-[14px] text-muted">Laden…</p> : null}
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block text-[13px] font-medium text-ink">
+            NL standaard (centen)
+            <input
+              className="mt-1.5 h-12 w-full rounded-[9px] border border-line px-3.5 text-[15px]"
+              inputMode="numeric"
+              value={nl}
+              placeholder="bijv. 695"
+              onChange={(e) => setNl(e.target.value)}
+            />
+          </label>
+          <label className="block text-[13px] font-medium text-ink">
+            BE standaard (centen)
+            <input
+              className="mt-1.5 h-12 w-full rounded-[9px] border border-line px-3.5 text-[15px]"
+              inputMode="numeric"
+              value={be}
+              placeholder="bijv. 995"
+              onChange={(e) => setBe(e.target.value)}
+            />
+          </label>
+        </div>
+        <p className="mt-3 text-[12px] text-muted">
+          Toekomstige categorieën (nog niet actief in checkout): groot transport, leverancier
+          direct, pallet — velden gereserveerd in opslag.
+        </p>
+        {error ? (
+          <p className="mt-3 text-[14px] text-red-700" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {message ? (
+          <p className="mt-3 text-[14px] text-green-800" role="status">
+            {message}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => void saveShipping()}
+          className="mt-4 inline-flex h-11 items-center rounded-[9px] bg-navy px-4 text-[14px] font-medium text-white disabled:opacity-50"
+        >
+          {saving ? 'Opslaan…' : 'Verzendtarieven opslaan'}
+        </button>
+      </section>
     </>
   )
 }

@@ -14,7 +14,7 @@ import { resolveCheckoutCountry } from '../../shared/geo-country'
 import { canRetryPayment, paymentUiState } from '../../shared/payment-ui'
 import { getSession } from '../auth/session'
 import { createDb } from '../db'
-import { addresses, customerProfiles, orders, payments } from '../db/schema'
+import { addresses, customerProfiles, orderItems, orders, payments } from '../db/schema'
 import { enforceRateLimit } from '../lib/rate-limit'
 import { getClientIp, isDevelopment } from '../lib/request'
 import { deliveryMethodsForCountry, shippingDiagnostics } from '../services/delivery'
@@ -30,6 +30,7 @@ import {
   mollieEnvironmentLabel,
 } from '../services/mollie'
 import { syncProviderPayment } from '../services/payment-sync'
+import { loadShippingSettings } from '../services/shipping-settings'
 import type { AppEnv } from '../types'
 
 export const checkoutRoutes = new Hono<AppEnv>()
@@ -153,15 +154,18 @@ checkoutRoutes.get('/context', async (c) => {
   const amountCents = Math.max(100, Number(c.req.query('amountCents') ?? '10000') || 10000)
   const locale = checkoutLocale(country)
   const mode = isDevelopment(c.env) ? 'development' : 'production'
-  const deliveryMethods = deliveryMethodsForCountry(country, mode).map((method) => ({
-    id: method.id,
-    label: method.label,
-    description: method.description,
-    amountCents: method.amountCents,
-    priceKnown: method.amountCents != null,
-    rateSource: method.rateSource,
-    deliveryTime: deliveryLabelShort(),
-  }))
+  const shippingSettings = await loadShippingSettings(c.env)
+  const deliveryMethods = deliveryMethodsForCountry(country, mode, shippingSettings.standard).map(
+    (method) => ({
+      id: method.id,
+      label: method.label,
+      description: method.description,
+      amountCents: method.amountCents,
+      priceKnown: method.amountCents != null,
+      rateSource: method.rateSource,
+      deliveryTime: deliveryLabelShort(),
+    }),
+  )
 
   const paymentsResult = await loadPaymentMethods(c.env, { amountCents, country })
 
@@ -235,7 +239,9 @@ checkoutRoutes.get('/context', async (c) => {
     })),
     locale,
     deliveryMethods,
-    shipping: shippingDiagnostics(mode),
+    shipping: shippingDiagnostics(mode, shippingSettings.standard),
+    shippingConfigured: shippingSettings.configured || mode === 'development',
+    shippingReleaseBlocker: shippingSettings.releaseBlocker,
     freeShippingLabel: freeShippingThresholdLabel(),
     paymentMethods: paymentsResult.paymentMethods,
     paymentMethodsError: paymentsResult.paymentMethodsError,
@@ -408,6 +414,15 @@ checkoutRoutes.get('/status', async (c) => {
 
   const shipping = JSON.parse(fresh.shippingSnapshot) as Record<string, string>
   const paymentMethod = payment?.method || fresh.paymentMethod
+  const items = await db
+    .select({
+      name: orderItems.name,
+      quantity: orderItems.quantity,
+      lineTotalCents: orderItems.lineTotalCents,
+      imageRef: orderItems.imageRef,
+    })
+    .from(orderItems)
+    .where(eq(orderItems.orderId, fresh.id))
 
   return c.json({
     orderNumber: fresh.orderNumber,
@@ -416,11 +431,14 @@ checkoutRoutes.get('/status', async (c) => {
     uiState,
     paymentMethod,
     totalCents: fresh.totalCents,
+    shippingCents: fresh.shippingCents,
+    subtotalCents: fresh.subtotalCents,
     currency: fresh.currency,
     shippingCountry: fresh.shippingCountry,
     email: fresh.guestEmail,
     shippingAddress: formatShippingLines(shipping),
-    estimatedDelivery: null,
+    estimatedDelivery: 'Levering binnen 1 tot 3 werkdagen',
+    items,
     hasAccount: Boolean(fresh.userId),
     canRetry,
     paidAt: fresh.paidAt,
