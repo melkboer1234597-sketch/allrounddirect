@@ -15,20 +15,40 @@ De URL `/scotdejewish/` is alleen de locatie van het panel. **De URL is geen bev
 
 Publieke registratie zet altijd `customer`. Extra velden `role` in signup worden genegeerd en na insert opnieuw op `customer` gezet.
 
-## Eerste beheerder
+## Eerste beheerder (voorkeur)
 
-1. Maak een gewoon account via de webshop (e-mailverificatie).
-2. Wijs de rol lokaal toe:
+Gebruik Better Auth-hashing via bootstrap. **Zet nooit een wachtwoord in Git, `.env*`, migrations of docs.**
 
-```bash
-node scripts/set-role.mjs --email=jouw@email.nl --role=super_admin --local
+```powershell
+# PowerShell — wachtwoord alleen in dit proces
+$env:ADMIN_BOOTSTRAP_EMAIL = "admin@allrounddirect.com"
+$secure = Read-Host -AsSecureString "Admin password"
+$bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+$env:ADMIN_BOOTSTRAP_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+
+# Lokaal
+npm run admin:bootstrap -- --local
+
+# Productie D1 (Wrangler moet op het juiste Cloudflare-account staan)
+npm run admin:bootstrap -- --remote
+
+# Daarna wachtwoord uit de shell halen
+Remove-Item Env:ADMIN_BOOTSTRAP_PASSWORD
+Remove-Item Env:ADMIN_BOOTSTRAP_EMAIL -ErrorAction SilentlyContinue
 ```
 
-Remote D1: zelfde command zonder `--local` (met Wrangler-auth).
+Idempotent: tweede run bevestigt `super_admin` en `email_verified` zonder het wachtwoord te wijzigen. Wachtwoord rotatie alleen met `--reset-password`.
 
-3. Open `http://localhost:5173/scotdejewish/login`.
+Alleen rol wijzigen (bestaand account):
 
-Er is geen publieke registratie voor adminrollen.
+```bash
+npm run admin:set-role -- --email=admin@allrounddirect.com --role=super_admin --remote
+```
+
+Open daarna `/scotdejewish/login` (productie: `https://allrounddirect.com/scotdejewish/`).
+
+Er is geen publieke registratie voor adminrollen. Password reset loopt via de normale Better Auth + Resend flow.
 
 ## Security
 

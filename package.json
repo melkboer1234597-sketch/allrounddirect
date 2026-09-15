@@ -22,6 +22,7 @@
     "db:migrate:local": "wrangler d1 migrations apply cloth --local",
     "db:migrate:remote": "wrangler d1 migrations apply cloth --remote",
     "admin:set-role": "node scripts/set-role.mjs",
+    "admin:bootstrap": "node scripts/admin-bootstrap.mjs",
     "db:studio": "drizzle-kit studio",
     "catalog:scan": "tsx scripts/catalog/scan-products.ts",
     "catalog:dry-run": "tsx scripts/catalog/run-import.ts --dry-run",

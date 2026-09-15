@@ -1,10 +1,14 @@
 /**
  * Wijs een interne rol toe. Nooit via publieke registratie.
- * Voorbeeld: node scripts/set-role.mjs --email=iemand@allrounddirect.nl --role=super_admin --local
+ * Voorbeeld: node scripts/set-role.mjs --email=iemand@allrounddirect.com --role=super_admin --local
+ * Remote:     node scripts/set-role.mjs --email=iemand@allrounddirect.com --role=super_admin --remote
+ *
+ * Voor nieuwe admin-accounts met wachtwoord: npm run admin:bootstrap
  */
 import { spawnSync } from 'node:child_process'
-import { writeFileSync, unlinkSync } from 'node:fs'
+import { writeFileSync, unlinkSync, mkdtempSync } from 'node:fs'
 import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((item) => {
@@ -15,20 +19,24 @@ const args = Object.fromEntries(
 
 const email = String(args.email ?? '').trim().toLowerCase()
 const role = String(args.role ?? '').trim()
-const local = 'local' in args || args.local === 'true'
+const remote = 'remote' in args || args.remote === 'true'
 const allowed = ['customer', 'admin', 'super_admin', 'catalog_manager', 'order_manager', 'support']
 
 if (!email || !allowed.includes(role)) {
-  console.error('Gebruik: node scripts/set-role.mjs --email=user@host --role=super_admin [--local]')
+  console.error(
+    'Gebruik: node scripts/set-role.mjs --email=user@host --role=super_admin [--local|--remote]',
+  )
   process.exit(1)
 }
 
-const sql = `UPDATE user SET role = '${role.replace(/'/g, "''")}' WHERE email = '${email.replace(/'/g, "''")}';`
-const file = join(process.cwd(), '.tmp-set-role.sql')
-writeFileSync(file, sql, 'utf8')
+const sql = `UPDATE user SET role = '${role.replace(/'/g, "''")}', updated_at = ${Date.now()} WHERE email = '${email.replace(/'/g, "''")}';`
+const dir = mkdtempSync(join(tmpdir(), 'ard-set-role-'))
+const file = join(dir, 'set-role.sql')
+writeFileSync(file, sql, { encoding: 'utf8', mode: 0o600 })
 
-const wranglerArgs = ['wrangler', 'd1', 'execute', 'allround-webshop-db', '--yes', '--file', file]
-if (local) wranglerArgs.push('--local')
+const wranglerArgs = ['wrangler', 'd1', 'execute', 'cloth', '--yes', '--file', file]
+if (remote) wranglerArgs.push('--remote')
+else wranglerArgs.push('--local')
 
 try {
   const result = spawnSync('npx', wranglerArgs, { stdio: 'inherit', shell: true })
