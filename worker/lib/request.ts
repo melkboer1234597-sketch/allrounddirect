@@ -18,6 +18,11 @@ export function getTrustedOrigins(env: AppEnv['Bindings']): string[] {
   const origin = getSiteOrigin(env)
   const extra = [
     origin,
+    'https://allrounddirect.com',
+    'https://www.allrounddirect.com',
+    // Temporary CORS allow during domain cutover from .nl
+    'https://www.allrounddirect.nl',
+    'https://allrounddirect.nl',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',

@@ -19,7 +19,7 @@ export const SITE = {
   legalName: 'AllRound Direct',
   defaultTitle: 'AllRound Direct | Meubels, Vloeren, Keuken & Horeca',
   defaultDescription:
-    'Shop meubels, vloeren, keukenproducten, koelapparatuur en horeca-artikelen bij AllRound Direct. Voor particuliere en zakelijke bestellingen.',
+    'Meubels, vloeren, keukenproducten, koelapparatuur en horeca bij AllRound Direct. Voor particulier en zakelijk in Nederland en België.',
   locale: 'nl_NL',
   language: 'nl',
 } as const
@@ -27,8 +27,12 @@ export const SITE = {
 export function getSiteOrigin(): string {
   const envUrl = import.meta.env.VITE_SITE_URL?.replace(/\/$/, '')
   if (envUrl) return envUrl
-  if (typeof window !== 'undefined') return window.location.origin
-  return ''
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/$/, '')
+    if (origin === 'https://www.allrounddirect.com') return 'https://allrounddirect.com'
+    return origin
+  }
+  return 'https://allrounddirect.com'
 }
 
 export function canonicalUrl(pathname: string): string {

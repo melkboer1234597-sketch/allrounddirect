@@ -86,7 +86,7 @@ export function WithdrawPage() {
       />
       <Container>
         <div className="mx-auto max-w-[42rem]">
-          <h1 className="heading-display text-navy">Overeenkomst herroepen</h1>
+          <h1 className="heading-page text-navy">Overeenkomst herroepen</h1>
           <p className="text-body mt-4 text-ink">
             Als consument kunt u de koop in beginsel binnen 14 dagen herroepen, zonder opgave van
             reden. Een account is niet nodig. Vul het ordernummer en het e-mailadres van de

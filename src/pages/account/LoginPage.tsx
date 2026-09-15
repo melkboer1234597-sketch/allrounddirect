@@ -15,19 +15,32 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [turnstile, setTurnstile] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
   const [showTurnstile, setShowTurnstile] = useState(false)
 
   const onToken = useCallback((token: string) => setTurnstile(token), [])
 
+  function validate() {
+    const nextErrors: { email?: string; password?: string } = {}
+    if (!email.trim()) nextErrors.email = 'Vul uw e-mailadres in.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      nextErrors.email = 'Vul een geldig e-mailadres in.'
+    }
+    if (!password) nextErrors.password = 'Vul uw wachtwoord in.'
+    setFieldErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
+    if (!validate()) return
     setPending(true)
     const { error: authError } = await authClient.signIn.email(
       {
-        email,
+        email: email.trim(),
         password,
         callbackURL: '/account/overzicht',
       },
@@ -41,7 +54,7 @@ export function LoginPage() {
       if (payload.message?.toLowerCase().includes('turnstile') || authError.status === 400) {
         setShowTurnstile(true)
       }
-      setError(authError.message || 'Inloggen is niet gelukt.')
+      setError(authError.message || 'Inloggen is niet gelukt. Controleer e-mail en wachtwoord.')
       return
     }
     navigate(next)
@@ -59,41 +72,63 @@ export function LoginPage() {
         title="Inloggen"
         description="Welkom terug. Afrekenen zonder account blijft mogelijk."
       >
-        <form className="space-y-4" onSubmit={onSubmit}>
+        <form className="space-y-5" onSubmit={onSubmit} noValidate>
           <TextField
             label="E-mailadres"
             name="email"
             type="email"
+            inputMode="email"
             autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
             required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            error={fieldErrors.email}
+            onChange={(event) => {
+              setEmail(event.target.value)
+              if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }))
+            }}
           />
           <PasswordField
             label="Wachtwoord"
             name="current-password"
             autoComplete="current-password"
+            enterKeyHint="go"
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            error={fieldErrors.password}
+            labelAside={
+              <Link to="/account/wachtwoord-vergeten" className="text-brand hover:underline">
+                Vergeten?
+              </Link>
+            }
+            onChange={(event) => {
+              setPassword(event.target.value)
+              if (fieldErrors.password) {
+                setFieldErrors((prev) => ({ ...prev, password: undefined }))
+              }
+            }}
           />
           {showTurnstile ? <TurnstileField onToken={onToken} /> : null}
           {error ? (
-            <p className="text-[14px] text-red-700" role="alert">
+            <p
+              className="rounded-[8px] bg-red-50 px-3 py-2.5 text-[14px] text-red-700 ring-1 ring-red-100"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? 'Bezig…' : 'Inloggen'}
+          <Button type="submit" className="w-full" disabled={pending} aria-busy={pending}>
+            {pending ? 'Bezig met inloggen…' : 'Inloggen'}
           </Button>
-          <p className="text-center text-[14px] text-muted">
-            <Link to="/account/wachtwoord-vergeten" className="text-brand hover:underline">
-              Wachtwoord vergeten?
-            </Link>
-          </p>
-          <p className="text-center text-[14px] text-muted">
+          <p className="pt-1 text-center text-[14px] text-muted">
             Nog geen account?{' '}
-            <Link to="/account/registreren" className="text-brand hover:underline">
+            <Link
+              to={`/account/registreren${params.get('volgende') ? `?volgende=${encodeURIComponent(params.get('volgende')!)}` : ''}`}
+              className="font-medium text-brand hover:underline"
+            >
               Account aanmaken
             </Link>
           </p>

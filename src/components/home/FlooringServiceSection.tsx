@@ -5,30 +5,33 @@ import { assets } from '@/lib/assets'
 
 export function FlooringServiceSection() {
   return (
-    <section aria-labelledby="floors-heading" className="section-space bg-surface">
-      <Container>
-        <div className="grid items-center gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:max-h-[500px]">
+    <section aria-labelledby="floors-heading" className="border-t border-line bg-surface">
+      <Container className="py-9 md:py-11 lg:py-12">
+        <div className="grid items-center gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
           <div className="media-frame overflow-hidden bg-navy">
             <CoverImage
               src={assets.categoryVloeren}
               alt="Vloeren uit het AllRound Direct assortiment"
               width={1200}
               height={750}
-              className="aspect-[16/10] max-h-[280px] w-full object-[center_80%] md:max-h-[340px] lg:aspect-auto lg:h-[min(420px,42vw)] lg:max-h-[420px]"
+              loading="eager"
+              className="aspect-[16/10] h-auto max-h-[240px] w-full object-[center_80%] md:max-h-[300px] lg:aspect-[16/10] lg:max-h-[340px]"
             />
           </div>
-          <div className="min-w-0 lg:py-2">
+          <div className="min-w-0">
             <h2 id="floors-heading" className="heading-section text-ink">
               Een nieuwe vloer nodig?
             </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted">
-              Bekijk vloeren en toebehoren voor iedere ruimte. Hulp nodig bij het leggen? Via
-              AllRoundKlussenbedrijf kunt u ook montage aanvragen.
+            <p className="mt-2.5 max-w-[42ch] text-[15px] leading-relaxed text-muted">
+              PVC, laminaat en meer voor thuis of project. Montage is apart aan te vragen via
+              AllRoundKlussenbedrijf.
             </p>
-            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
-              <Button to="/vloeren">Bekijk vloeren</Button>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button to="/vloeren" size="sm">
+                Bekijk vloeren
+              </Button>
               <Button to="/advies/pvc-of-laminaat-kiezen" variant="text">
-                PVC of laminaat kiezen
+                PVC of laminaat
               </Button>
             </div>
           </div>

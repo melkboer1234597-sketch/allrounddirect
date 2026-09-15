@@ -97,4 +97,34 @@ app.route('/', seoRoutes)
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
-export default app
+const CANONICAL_HOST = 'allrounddirect.com'
+const WWW_HOST = 'www.allrounddirect.com'
+
+function shouldPassToAssets(pathname: string): boolean {
+  if (pathname.startsWith('/api')) return false
+  if (pathname.startsWith('/media/products')) return false
+  if (pathname === '/sitemap.xml' || pathname.startsWith('/sitemap-')) return false
+  if (pathname === '/robots.txt') return false
+  return true
+}
+
+export default {
+  async fetch(request: Request, env: AppEnv['Bindings'], ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url)
+
+    // Canonical: www → apex (preserve path + query). Mollie webhooks use apex only.
+    if (url.hostname === WWW_HOST) {
+      url.hostname = CANONICAL_HOST
+      return Response.redirect(url.toString(), 308)
+    }
+
+    const response = await app.fetch(request, env, ctx)
+
+    // With run_worker_first, SPA/static routes fall through to Assets after Hono 404.
+    if (response.status === 404 && env.ASSETS && shouldPassToAssets(url.pathname)) {
+      return env.ASSETS.fetch(request)
+    }
+
+    return response
+  },
+}

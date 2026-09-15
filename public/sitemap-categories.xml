@@ -1,372 +1,372 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.allrounddirect.nl/assortiment</loc>
+    <loc>https://allrounddirect.com/assortiment</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/meubels</loc>
+    <loc>https://allrounddirect.com/meubels</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/meubels/banken</loc>
+    <loc>https://allrounddirect.com/meubels/banken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/meubels/banken/hoekbanken</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/fauteuils</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/stoelen</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/eettafels</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/salontafels</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/bijzettafels</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/kasten</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/dressoirs</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/tv-meubels</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/bedden</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/meubels/eetkamermeubels</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/vloeren</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/vloeren/pvc</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.allrounddirect.nl/vloeren/pvc/klik-pvc</loc>
+    <loc>https://allrounddirect.com/meubels/banken/hoekbanken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/pvc/plak-pvc</loc>
+    <loc>https://allrounddirect.com/meubels/fauteuils</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/stoelen</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/eettafels</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/salontafels</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/bijzettafels</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/kasten</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/dressoirs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/tv-meubels</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/bedden</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/meubels/eetkamermeubels</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/vloeren</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/vloeren/pvc</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/vloeren/pvc/klik-pvc</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/laminaat</loc>
+    <loc>https://allrounddirect.com/vloeren/pvc/plak-pvc</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://allrounddirect.com/vloeren/laminaat</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/parket</loc>
+    <loc>https://allrounddirect.com/vloeren/parket</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/tegels</loc>
+    <loc>https://allrounddirect.com/vloeren/tegels</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/ondervloeren</loc>
+    <loc>https://allrounddirect.com/vloeren/ondervloeren</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/plinten</loc>
+    <loc>https://allrounddirect.com/vloeren/plinten</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/profielen</loc>
+    <loc>https://allrounddirect.com/vloeren/profielen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/vloeren/vloeraccessoires</loc>
+    <loc>https://allrounddirect.com/vloeren/vloeraccessoires</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken</loc>
+    <loc>https://allrounddirect.com/keuken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/keukenkasten</loc>
+    <loc>https://allrounddirect.com/keuken/keukenkasten</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/werkbladen</loc>
+    <loc>https://allrounddirect.com/keuken/werkbladen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/spoelbakken</loc>
+    <loc>https://allrounddirect.com/keuken/spoelbakken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/kranen</loc>
+    <loc>https://allrounddirect.com/keuken/kranen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/keukenapparatuur</loc>
+    <loc>https://allrounddirect.com/keuken/keukenapparatuur</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/keukenonderdelen</loc>
+    <loc>https://allrounddirect.com/keuken/keukenonderdelen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/keuken/accessoires</loc>
+    <loc>https://allrounddirect.com/keuken/accessoires</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/koelkasten</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/koelkasten</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/vriezers</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/vriezers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/koel-vriescombinaties</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/koel-vriescombinaties</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/drankkoelingen</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/drankkoelingen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/wijnkoelkasten</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/wijnkoelkasten</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/horecakoeling</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/horecakoeling</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/koelvitrines</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/koelvitrines</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/koelen-vriezen/koelwerkbanken</loc>
+    <loc>https://allrounddirect.com/koelen-vriezen/koelwerkbanken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca</loc>
+    <loc>https://allrounddirect.com/horeca</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/koeling</loc>
+    <loc>https://allrounddirect.com/horeca/koeling</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/kookapparatuur</loc>
+    <loc>https://allrounddirect.com/horeca/kookapparatuur</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/rvs-meubilair</loc>
+    <loc>https://allrounddirect.com/horeca/rvs-meubilair</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/spoelen-reinigen</loc>
+    <loc>https://allrounddirect.com/horeca/spoelen-reinigen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/restaurantmeubilair</loc>
+    <loc>https://allrounddirect.com/horeca/restaurantmeubilair</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/opslag</loc>
+    <loc>https://allrounddirect.com/horeca/opslag</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/buffet-presentatie</loc>
+    <loc>https://allrounddirect.com/horeca/buffet-presentatie</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/bar</loc>
+    <loc>https://allrounddirect.com/horeca/bar</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/professionele-keuken</loc>
+    <loc>https://allrounddirect.com/horeca/professionele-keuken</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/horeca/accessoires</loc>
+    <loc>https://allrounddirect.com/horeca/accessoires</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen</loc>
+    <loc>https://allrounddirect.com/wonen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/woonkamer</loc>
+    <loc>https://allrounddirect.com/wonen/woonkamer</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/eetkamer</loc>
+    <loc>https://allrounddirect.com/wonen/eetkamer</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/slaapkamer</loc>
+    <loc>https://allrounddirect.com/wonen/slaapkamer</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/verlichting</loc>
+    <loc>https://allrounddirect.com/wonen/verlichting</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/opbergen</loc>
+    <loc>https://allrounddirect.com/wonen/opbergen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/woonaccessoires</loc>
+    <loc>https://allrounddirect.com/wonen/woonaccessoires</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/deuren</loc>
+    <loc>https://allrounddirect.com/wonen/deuren</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/wonen/tuinmeubels</loc>
+    <loc>https://allrounddirect.com/wonen/tuinmeubels</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/huishouden</loc>
+    <loc>https://allrounddirect.com/huishouden</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/huishouden/wasmachines</loc>
+    <loc>https://allrounddirect.com/huishouden/wasmachines</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk</loc>
+    <loc>https://allrounddirect.com/zakelijk</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk/horeca</loc>
+    <loc>https://allrounddirect.com/zakelijk/horeca</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk/projectinrichting</loc>
+    <loc>https://allrounddirect.com/zakelijk/projectinrichting</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk/kantoor-bedrijfsruimte</loc>
+    <loc>https://allrounddirect.com/zakelijk/kantoor-bedrijfsruimte</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk/grootafname</loc>
+    <loc>https://allrounddirect.com/zakelijk/grootafname</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/zakelijk/offerte</loc>
+    <loc>https://allrounddirect.com/zakelijk/offerte</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/outlet</loc>
+    <loc>https://allrounddirect.com/outlet</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/outlet/laatste-stuks</loc>
+    <loc>https://allrounddirect.com/outlet/laatste-stuks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/outlet/restpartijen</loc>
+    <loc>https://allrounddirect.com/outlet/restpartijen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.allrounddirect.nl/outlet/tijdelijke-aanbiedingen</loc>
+    <loc>https://allrounddirect.com/outlet/tijdelijke-aanbiedingen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -15,6 +15,8 @@ export type ProductImage = {
   width?: number
   height?: number
   fit?: 'cover' | 'contain'
+  /** When present, only `ok` (or unset) images belong in public galleries. */
+  imageStatus?: 'ok' | 'suspicious' | 'excluded' | string | null
 }
 
 export type ProductAttributes = Record<string, string | number | boolean | undefined>
@@ -75,7 +77,7 @@ export type CatalogQuery = {
 export type FacetValue = {
   value: string
   label: string
-  count: number
+  count?: number
 }
 
 export type CatalogQueryResult = {

@@ -24,6 +24,28 @@ function upsertEnum(
   return { ...query, page: 1, filters }
 }
 
+function resolveEnumOptions(
+  filter: FilterDefinition,
+  facets: Record<string, FacetValue[]>,
+  selected: string[],
+): FacetValue[] {
+  const facetOptions = facets[filter.id]
+  if (Array.isArray(facetOptions)) {
+    return facetOptions.filter(
+      (option) =>
+        option.count == null || option.count > 0 || selected.includes(option.value),
+    )
+  }
+  // Facets not loaded yet — show schema options so the sidebar isn't empty flash.
+  if (Object.keys(facets).length === 0 && filter.options?.length) {
+    return filter.options.map((option) => ({
+      value: option.value,
+      label: option.label,
+    }))
+  }
+  return []
+}
+
 function EnumFilter({
   filter,
   query,
@@ -36,26 +58,28 @@ function EnumFilter({
   onChange: (next: CatalogQuery) => void
 }) {
   const selected = query.filters?.[filter.id] ?? []
-  const options =
-    (facets[filter.id]?.length
-      ? facets[filter.id]
-      : filter.options?.map((item) => ({ ...item, count: 0 }))) ?? []
+  const options = resolveEnumOptions(filter, facets, selected)
   if (!options.length) return null
 
   return (
-    <div className="mt-2 space-y-1.5">
+    <div className="mt-2 space-y-0.5">
       {options.map((option) => (
-        <label key={option.value} className="flex min-h-11 items-center gap-2 text-[14px] text-ink">
+        <label
+          key={option.value}
+          className="flex min-h-9 cursor-pointer items-center gap-2.5 text-[14px] text-ink"
+        >
           <input
             type="checkbox"
-            className="h-4 w-4 accent-brand"
+            className="h-4 w-4 shrink-0 rounded-[3px] border-line accent-brand"
             checked={selected.includes(option.value)}
             onChange={(event) =>
               onChange(upsertEnum(query, filter.id, option.value, event.target.checked))
             }
           />
-          <span className="flex-1">{option.label}</span>
-          {option.count ? <span className="text-[12px] text-muted">{option.count}</span> : null}
+          <span className="min-w-0 flex-1 leading-snug">{option.label}</span>
+          {typeof option.count === 'number' ? (
+            <span className="shrink-0 text-[12px] tabular-nums text-muted">{option.count}</span>
+          ) : null}
         </label>
       ))}
     </div>
@@ -66,46 +90,66 @@ export function FilterFields({ schemaId, query, facets, onChange }: FilterFields
   const schema = FILTER_SCHEMAS[schemaId] ?? FILTER_SCHEMAS.generic
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {schema.map((filter) => {
         if (filter.type === 'range' && filter.id === 'price') {
           return (
-            <fieldset key={filter.id}>
-              <legend className="text-[13px] font-semibold text-ink">{filter.label}</legend>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+            <fieldset key={filter.id} className="border-b border-line pb-5">
+              <legend className="text-[13px] font-semibold tracking-wide text-ink">
+                {filter.label}
+              </legend>
+              <div className="mt-2.5 grid grid-cols-2 gap-2">
                 <label className="text-[12px] text-muted">
                   Van
-                  <input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={query.priceMin ?? ''}
-                    onChange={(event) =>
-                      onChange({
-                        ...query,
-                        page: 1,
-                        priceMin: event.target.value ? Number(event.target.value) : undefined,
-                      })
-                    }
-                    className="mt-1 h-11 w-full rounded-[4px] px-2 text-[14px] text-ink ring-1 ring-line outline-none focus:ring-brand"
-                  />
+                  <span className="mt-1 flex h-10 items-center rounded-[8px] ring-1 ring-line focus-within:ring-brand">
+                    <span className="pl-2.5 text-[13px] text-muted" aria-hidden>
+                      €
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={query.priceMin ?? ''}
+                      onChange={(event) => {
+                        const raw = event.target.value
+                        const next = raw === '' ? undefined : Number(raw)
+                        onChange({
+                          ...query,
+                          page: 1,
+                          priceMin:
+                            next == null || Number.isNaN(next) || next < 0 ? undefined : next,
+                        })
+                      }}
+                      className="h-10 w-full bg-transparent px-2 text-[14px] text-ink outline-none"
+                    />
+                  </span>
                 </label>
                 <label className="text-[12px] text-muted">
                   Tot
-                  <input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={query.priceMax ?? ''}
-                    onChange={(event) =>
-                      onChange({
-                        ...query,
-                        page: 1,
-                        priceMax: event.target.value ? Number(event.target.value) : undefined,
-                      })
-                    }
-                    className="mt-1 h-11 w-full rounded-[4px] px-2 text-[14px] text-ink ring-1 ring-line outline-none focus:ring-brand"
-                  />
+                  <span className="mt-1 flex h-10 items-center rounded-[8px] ring-1 ring-line focus-within:ring-brand">
+                    <span className="pl-2.5 text-[13px] text-muted" aria-hidden>
+                      €
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="…"
+                      value={query.priceMax ?? ''}
+                      onChange={(event) => {
+                        const raw = event.target.value
+                        const next = raw === '' ? undefined : Number(raw)
+                        onChange({
+                          ...query,
+                          page: 1,
+                          priceMax:
+                            next == null || Number.isNaN(next) || next < 0 ? undefined : next,
+                        })
+                      }}
+                      className="h-10 w-full bg-transparent px-2 text-[14px] text-ink outline-none"
+                    />
+                  </span>
                 </label>
               </div>
             </fieldset>
@@ -114,10 +158,13 @@ export function FilterFields({ schemaId, query, facets, onChange }: FilterFields
 
         if (filter.type === 'boolean') {
           return (
-            <label key={filter.id} className="flex min-h-11 items-center gap-2 text-[14px]">
+            <label
+              key={filter.id}
+              className="flex min-h-9 cursor-pointer items-center gap-2.5 border-b border-line pb-5 text-[14px]"
+            >
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-brand"
+                className="h-4 w-4 rounded-[3px] accent-brand"
                 checked={
                   Boolean(query.outlet) || (query.filters?.[filter.id] ?? []).includes('true')
                 }
@@ -135,14 +182,16 @@ export function FilterFields({ schemaId, query, facets, onChange }: FilterFields
         }
 
         if (filter.type === 'enum') {
+          const selected = query.filters?.[filter.id] ?? []
+          const options = resolveEnumOptions(filter, facets, selected)
+          if (!options.length) return null
+
           return (
-            <details key={filter.id} open className={cn('border-b border-line pb-4')}>
-              <summary className="cursor-pointer list-none text-[13px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+            <details key={filter.id} open className={cn('border-b border-line pb-5')}>
+              <summary className="cursor-pointer list-none text-[13px] font-semibold tracking-wide text-ink [&::-webkit-details-marker]:hidden">
                 {filter.label}
               </summary>
-              <div className="mt-2">
-                <EnumFilter filter={filter} query={query} facets={facets} onChange={onChange} />
-              </div>
+              <EnumFilter filter={filter} query={query} facets={facets} onChange={onChange} />
             </details>
           )
         }

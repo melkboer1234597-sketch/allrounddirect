@@ -14,7 +14,7 @@ export function WithdrawalFormPage() {
       />
       <Container>
         <article className="mx-auto max-w-[42rem] print:max-w-none">
-          <h1 className="heading-display text-navy">Modelformulier herroeping</h1>
+          <h1 className="heading-page text-navy">Modelformulier herroeping</h1>
           <p className="text-body mt-4 text-ink">
             Dit is het modelformulier voor herroeping. U mag het printen, invullen en sturen. De
             snelste route is de digitale functie{' '}

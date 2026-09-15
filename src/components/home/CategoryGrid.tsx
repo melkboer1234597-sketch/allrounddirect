@@ -39,7 +39,7 @@ const categories = [
     image: assets.categoryKoelen,
     alt: 'Koelkast en vriesapparatuur',
     objectPosition: 'center',
-    cta: 'Bekijk koelen & vriezen',
+    cta: 'Bekijk koelen',
     size: 'medium' as const,
     className: 'lg:col-span-4',
   },
@@ -66,9 +66,9 @@ const categories = [
   {
     title: 'Huishouden',
     href: '/huishouden',
-    image: assets.sectionBusiness,
+    image: assets.sectionDelivery,
     alt: 'Huishoudelijke apparatuur en producten',
-    objectPosition: '60% center',
+    objectPosition: 'center 40%',
     cta: 'Bekijk huishouden',
     size: 'compact' as const,
     className: 'lg:col-span-4',
@@ -78,7 +78,7 @@ const categories = [
     href: '/outlet',
     image: assets.sectionOutlet,
     alt: 'Outlet en tijdelijke partijen',
-    objectPosition: 'left center',
+    objectPosition: 'center 35%',
     cta: 'Bekijk outlet',
     size: 'compact' as const,
     className: 'lg:col-span-4',
@@ -87,20 +87,18 @@ const categories = [
 
 export function CategoryGrid() {
   return (
-    <section aria-labelledby="categories-heading" className="section-space">
+    <section aria-labelledby="categories-heading" className="section-space-tight">
       <Container>
-        <div className="mb-5 md:mb-6">
+        <div className="mb-4 md:mb-5">
           <h2 id="categories-heading" className="heading-section text-ink">
             Waar bent u naar op zoek?
           </h2>
-          <p className="mt-1.5 text-[14px] text-muted md:text-[15px]">
-            Kies een productgroep en ga verder in het assortiment.
-          </p>
+          <p className="mt-1 text-[14px] text-muted">Kies een productgroep om verder te kijken.</p>
         </div>
 
-        {/* Mobile / tablet: 2-column discovery grid */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-3.5 lg:hidden">
-          {categories.map((item) => (
+        {/* Mobile / tablet: compact 2-column discovery */}
+        <div className="grid grid-cols-2 gap-2 min-[400px]:gap-2.5 sm:gap-3 lg:hidden">
+          {categories.map((item, index) => (
             <CategoryCard
               key={item.href}
               href={item.href}
@@ -108,13 +106,13 @@ export function CategoryGrid() {
               image={item.image}
               imageAlt={item.alt}
               cta={item.cta}
-              size={item.size === 'large' ? 'medium' : 'compact'}
+              size={index < 2 ? 'medium' : 'compact'}
               objectPosition={item.objectPosition}
             />
           ))}
         </div>
 
-        {/* Desktop: editorial 2 / 3 / 3 layout */}
+        {/* Desktop: editorial 2 / 3 / 3 */}
         <div className="hidden gap-3.5 lg:grid lg:grid-cols-12 lg:gap-4">
           {categories.map((item) => (
             <CategoryCard

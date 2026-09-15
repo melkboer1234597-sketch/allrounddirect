@@ -8,6 +8,7 @@ import { findCategoryByPath, taxonomyDescendantSlugs } from '@/data/taxonomy'
 import { filterSchemaForCategory } from '@/lib/product-presentation'
 import { catalogCanonicalPath, hasUncuratedFacetParams } from '@/lib/catalog-url'
 import { breadcrumbListJsonLd, collectionPageJsonLd } from '@/lib/seo'
+import { cn } from '@/lib/cn'
 import { SEO_REDIRECTS } from '../../shared/redirects'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -33,9 +34,7 @@ export function CategoryPage() {
   const intro =
     active?.intro ?? root?.intro ?? 'Bekijk het volledige assortiment van AllRound Direct.'
   const description = active?.intro ?? root?.seoDescription ?? intro
-  const schemaId = root
-    ? filterSchemaForCategory(root.slug, active?.slug)
-    : 'generic'
+  const schemaId = root ? filterSchemaForCategory(root.slug, active?.slug) : 'generic'
   const body = active?.content ?? root?.content
   const childLinks = found.leaf
     ? []
@@ -83,7 +82,7 @@ export function CategoryPage() {
       : undefined
 
   return (
-    <main id="main" className="section-space">
+    <main id="main" className="page-shell !pt-5 md:!pt-7">
       <SeoHead
         title={seoTitle}
         description={description}
@@ -104,24 +103,36 @@ export function CategoryPage() {
       />
       <Container>
         <Breadcrumbs items={crumbs} />
-        <h1 className="heading-display mt-4 text-ink">{title}</h1>
-        <p className="text-body mt-3 max-w-3xl text-muted">{intro}</p>
+        <h1 className="heading-page mt-2 text-ink md:mt-2.5">{title}</h1>
+        <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">{intro}</p>
+
         {childLinks.length > 0 ? (
-          <ul className="mt-6 flex gap-3 overflow-x-auto hide-scrollbar pb-1 md:flex-wrap md:overflow-visible">
-            {childLinks.map((item) => (
-              <li key={item.href} className="shrink-0">
-                <Link
-                  to={item.href}
-                  className="inline-flex min-h-11 items-center rounded-[4px] bg-surface px-3 text-[14px] ring-1 ring-line hover:ring-brand"
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <nav aria-label="Subcategorieën" className="mt-5">
+            <ul className="category-tabs hide-scrollbar flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
+              {childLinks.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                return (
+                  <li key={item.href} className="shrink-0">
+                    <Link
+                      to={item.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'inline-flex h-9 items-center rounded-[8px] px-3 text-[13px] font-medium transition-colors',
+                        isActive
+                          ? 'bg-navy text-white'
+                          : 'bg-white text-ink ring-1 ring-line hover:ring-navy/30',
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
         ) : null}
 
-        <div className="mt-8">
+        <div className="mt-6 md:mt-7">
           <CatalogListing
             categorySlug={root?.slug}
             subcategorySlug={found.leaf?.slug ?? found.child?.slug}
@@ -134,25 +145,25 @@ export function CategoryPage() {
         </div>
 
         {root?.slug === 'vloeren' ? (
-          <p className="mt-10 text-[15px] text-ink">
+          <p className="mt-10 text-[14px] text-muted">
             Hulp bij de keuze? Lees{' '}
             <Link to="/advies/pvc-of-laminaat-kiezen" className="text-brand hover:underline">
               PVC of laminaat kiezen
             </Link>{' '}
-            of bereken{' '}
+            of{' '}
             <Link to="/advies/hoeveel-vloer-heb-ik-nodig" className="text-brand hover:underline">
               hoeveel vloer u nodig heeft
             </Link>
-            . Voor leggen:{' '}
+            . Montage via{' '}
             <Link to="/montage" className="text-brand hover:underline">
-              montage via AllRoundKlussenbedrijf
+              AllRoundKlussenbedrijf
             </Link>
             .
           </p>
         ) : null}
 
         {root?.showBusinessCta ? (
-          <p className="mt-6 text-[15px] text-ink">
+          <p className="mt-6 text-[14px] text-muted">
             Grotere aantallen of horecainkoop?{' '}
             <Link to="/zakelijk/offerte" className="text-brand hover:underline">
               Vraag een zakelijke offerte aan
@@ -162,9 +173,11 @@ export function CategoryPage() {
         ) : null}
 
         {body ? (
-          <section className="mt-14 max-w-3xl border-t border-line pt-10">
-            <h2 className="heading-section text-ink">{body.heading}</h2>
-            <p className="text-body mt-3 text-muted">{body.body}</p>
+          <section className="mt-12 max-w-3xl border-t border-line pt-8">
+            <h2 className="font-heading text-[18px] font-semibold text-ink md:text-[20px]">
+              {body.heading}
+            </h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted">{body.body}</p>
           </section>
         ) : null}
       </Container>

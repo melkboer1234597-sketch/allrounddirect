@@ -5,31 +5,29 @@ import { assets } from '@/lib/assets'
 
 export function OutletSection() {
   return (
-    <section aria-labelledby="outlet-heading" className="bg-navy">
-      <div className="relative min-h-[280px] overflow-hidden md:min-h-[300px] lg:min-h-[320px] lg:max-h-[360px]">
-        <CoverImage
-          src={assets.sectionOutlet}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-45 md:object-left"
-        />
-        <div className="absolute inset-0 bg-navy/60" aria-hidden />
-        <Container className="relative flex min-h-[280px] items-center py-10 md:min-h-[300px] md:py-12 lg:min-h-[320px] lg:py-14">
-          <div className="max-w-lg text-white">
-            <h2 id="outlet-heading" className="heading-section">
-              Outlet en tijdelijke partijen
-            </h2>
-            <p className="mt-2.5 text-[15px] leading-relaxed text-white/85">
-              Geselecteerde producten en partijen tegen scherpe prijzen. Beschikbaarheid zolang de
-              voorraad strekt.
-            </p>
-            <div className="mt-5">
-              <Button to="/outlet" variant="onDark">
-                Bekijk outlet
-              </Button>
-            </div>
+    <section aria-labelledby="outlet-heading" className="relative overflow-hidden bg-navy">
+      <CoverImage
+        src={assets.sectionOutlet}
+        alt=""
+        loading="eager"
+        className="absolute inset-0 h-full min-h-full w-full object-cover object-[center_30%] opacity-45"
+      />
+      <div className="absolute inset-0 bg-navy/55" aria-hidden />
+      <Container className="relative flex items-center py-9 md:py-10 lg:py-11">
+        <div className="max-w-md text-white">
+          <h2 id="outlet-heading" className="heading-section">
+            Outlet en tijdelijke partijen
+          </h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-white/85">
+            Geselecteerde producten tegen scherpe prijzen, zolang de voorraad strekt.
+          </p>
+          <div className="mt-4">
+            <Button to="/outlet" variant="onDark" size="sm">
+              Bekijk outlet
+            </Button>
           </div>
-        </Container>
-      </div>
+        </div>
+      </Container>
     </section>
   )
 }

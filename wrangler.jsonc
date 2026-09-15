@@ -9,33 +9,25 @@
   "vars": {
     // Production Worker defaults. Override locally via `.dev.vars`.
     "ENVIRONMENT": "production",
-    "BETTER_AUTH_URL": "https://www.allrounddirect.nl",
-    "SITE_URL": "https://www.allrounddirect.nl",
-    "PUBLIC_SITE_URL": "https://www.allrounddirect.nl",
+    "BETTER_AUTH_URL": "https://allrounddirect.com",
+    "SITE_URL": "https://allrounddirect.com",
+    "PUBLIC_SITE_URL": "https://allrounddirect.com",
     "MOLLIE_MODE": "test",
     "MOLLIE_ALLOW_LIVE": "false",
     "MOLLIE_BLOCK_LIVE_REFUNDS": "true"
   },
 
+  "routes": [
+    { "pattern": "allrounddirect.com", "custom_domain": true },
+    { "pattern": "www.allrounddirect.com", "custom_domain": true }
+  ],
+
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": [
-      "/api/*",
-      "/media/*",
-      "/sitemap.xml",
-      "/sitemap-static.xml",
-      "/sitemap-categories.xml",
-      "/sitemap-content.xml",
-      "/sitemap-products.xml",
-      "/sitemap-products-*",
-      "/robots.txt",
-      "/meubels/hoekbanken",
-      "/vloeren/klik-pvc",
-      "/vloeren/plak-pvc",
-      "/offerte"
-    ]
+    // Worker runs first so www→apex 308 applies to all paths, then Hono/API or assets.
+    "run_worker_first": true
   },
 
   "d1_databases": [
@@ -44,7 +36,7 @@
       "database_name": "cloth",
       "database_id": "e41adef2-8318-483e-9847-de4cb71ca545",
       "migrations_dir": "drizzle",
-      "remote": true
+      "remote": false
     }
   ],
 
@@ -52,7 +44,7 @@
     {
       "binding": "MEDIA",
       "bucket_name": "piccas",
-      "remote": true
+      "remote": false
     }
   ],
 

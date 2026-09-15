@@ -1,6 +1,7 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Minus, Plus, Truck } from 'lucide-react'
 import { SITE } from '@/config/site'
 import { SeoHead } from '@/components/seo/SeoHead'
 import { ProductGallery } from '@/components/product/ProductGallery'
@@ -72,6 +73,12 @@ export function ProductPage() {
   }, [product?.slug])
 
   useEffect(() => {
+    setQty(1)
+    setAdded(false)
+    setVariantSelection({})
+  }, [product?.id])
+
+  useEffect(() => {
     const node = ctaRef.current
     if (!node) return
     const observer = new IntersectionObserver(
@@ -94,7 +101,7 @@ export function ProductPage() {
 
   if (isLoading) {
     return (
-      <main id="main" className="section-space">
+      <main id="main" className="page-shell bg-white pb-16">
         <SeoHead
           title={`Product | ${SITE.name}`}
           description="Productpagina van AllRound Direct."
@@ -102,12 +109,13 @@ export function ProductPage() {
           robots="noindex,nofollow"
         />
         <Container>
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-            <div className="aspect-[4/3] animate-pulse rounded-[12px] bg-surface" />
-            <div className="space-y-3">
-              <div className="h-4 w-24 rounded bg-surface" />
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="h-[420px] animate-pulse rounded-[12px] bg-surface lg:h-[560px]" />
+            <div className="space-y-3 pt-2">
+              <div className="h-3 w-24 rounded bg-surface" />
               <div className="h-8 w-4/5 rounded bg-surface" />
               <div className="h-7 w-32 rounded bg-surface" />
+              <div className="h-20 w-full rounded bg-surface" />
             </div>
           </div>
         </Container>
@@ -117,7 +125,7 @@ export function ProductPage() {
 
   if (!product) {
     return (
-      <main id="main" className="section-space">
+      <main id="main" className="page-shell">
         <SeoHead
           title={`Product niet gevonden | ${SITE.name}`}
           description="Dit product is niet gevonden."
@@ -125,8 +133,8 @@ export function ProductPage() {
           robots="noindex,nofollow"
         />
         <Container>
-          <h1 className="heading-display text-ink">Product niet gevonden</h1>
-          <p className="text-body mt-4 text-muted">
+          <h1 className="heading-page text-ink">Product niet gevonden</h1>
+          <p className="mt-4 text-[15px] text-muted">
             Dit artikel staat niet (meer) in het assortiment.
           </p>
           <div className="mt-8">
@@ -138,18 +146,16 @@ export function ProductPage() {
   }
 
   const presentation = presentationForProduct(product)
-  const image = product.images[0]
+  const image = product.images.find((item) => !item.imageStatus || item.imageStatus === 'ok')
   const isDemo = 'isDemo' in product && product.isDemo === true
   const showPrice = Boolean(product.price) && product.priceLabel !== 'Prijs op aanvraag'
   const stock = stockCopy(product)
   const deliveryFull = deliveryLabelFull()
-  const productCents =
-    showPrice && product.price ? eurosToCents(product.price.amount) : 0
-  const freeShipLabel = qualifiesForFreeShipping(productCents)
-    ? 'Gratis verzending'
-    : freeShippingThresholdLabel()
+  const productCents = showPrice && product.price ? eurosToCents(product.price.amount) : 0
+  const hasFreeShipping = qualifiesForFreeShipping(productCents)
+  const freeShipLabel = hasFreeShipping ? 'Gratis verzending' : freeShippingThresholdLabel()
 
-  const keySpecs = resolveKeySpecs(product, presentation)
+  const keySpecs = resolveKeySpecs(product, presentation, 6)
   const allSpecs = resolveAllSpecs(product, presentation)
   const packCoverage = flooringPackCoverage(product)
   const variants = (product as { variants?: ProductVariantOption[] }).variants
@@ -160,6 +166,7 @@ export function ProductPage() {
     presentation.cta.mode === 'cart_and_quote' ||
     product.isBusinessOnly
   const quoteProminent = Boolean(presentation.cta.quoteProminent) || Boolean(product.isBusinessOnly)
+  const montageLink = presentation.serviceLinks.find((link) => link.href === '/montage')
   const liveSchema =
     !isDemo && product.price
       ? productJsonLd({
@@ -169,7 +176,9 @@ export function ProductPage() {
           sku: product.sku,
           gtin: product.gtin,
           brand: product.brand,
-          images: product.images.map((item) => item.src),
+          images: product.images
+            .filter((item) => !item.imageStatus || item.imageStatus === 'ok')
+            .map((item) => item.src),
           price: product.price,
           stockStatus: product.stockStatus,
         })
@@ -180,8 +189,77 @@ export function ProductPage() {
     setAdded(true)
   }
 
+  const detailSections = [
+    {
+      id: 'desc' as const,
+      label: 'Productomschrijving',
+      content: (
+        <div className="space-y-4 text-[15px] leading-relaxed text-ink/85">
+          {product.description || product.shortDescription ? (
+            <p>{product.description || product.shortDescription}</p>
+          ) : (
+            <p className="text-muted">Nog geen omschrijving beschikbaar.</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'specs' as const,
+      label: 'Specificaties',
+      content: (
+        <div id="specificaties">
+          {allSpecs.length ? (
+            <table className="w-full text-left text-[14px]">
+              <tbody>
+                {allSpecs.map((spec, index) => (
+                  <tr
+                    key={`${spec.id}-${spec.label}`}
+                    className={index % 2 === 0 ? 'bg-surface/80' : undefined}
+                  >
+                    <th className="w-[38%] px-3 py-2.5 align-top font-medium text-muted">
+                      {spec.label}
+                    </th>
+                    <td className="px-3 py-2.5 text-ink">{spec.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-[15px] text-muted">Nog geen specificaties beschikbaar.</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'delivery' as const,
+      label: 'Levering en retourneren',
+      content: (
+        <div id="bezorgen" className="space-y-3 text-[15px] leading-relaxed text-ink/85">
+          <p>
+            {deliveryFull}. Wij leveren bestellingen in Nederland en België op het opgegeven
+            afleveradres.
+          </p>
+          <p>{freeShippingThresholdLabel()}.</p>
+          <p>
+            Afhankelijk van het product en de logistiek kan een bestelling in meerdere zendingen
+            aankomen. Montage is niet standaard inbegrepen.
+          </p>
+          <p>
+            <Link to="/bezorgen" className="text-brand hover:underline">
+              Meer over levering
+            </Link>
+            {' · '}
+            <Link to="/retourneren" className="text-brand hover:underline">
+              Retourneren
+            </Link>
+          </p>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <main id="main" className="pb-24 md:pb-0">
+    <main id="main" className="pb-24 md:pb-16">
       <SeoHead
         title={`${product.name} | ${SITE.name}`}
         description={`${product.name} in ${product.category} bij AllRound Direct.`}
@@ -203,68 +281,73 @@ export function ProductPage() {
           ...(liveSchema ? [{ id: 'jsonld-product', data: liveSchema }] : []),
         ]}
       />
-      <Container className="pt-4 md:pt-6 lg:pt-8">
+      <Container className="pt-4 md:pt-6 lg:pt-7">
         <Breadcrumbs
           items={crumbs.map((item, index) =>
             index === crumbs.length - 1
-              ? { ...item, label: item.label.length > 42 ? `${item.label.slice(0, 40)}…` : item.label }
+              ? {
+                  ...item,
+                  label: item.label.length > 42 ? `${item.label.slice(0, 40)}…` : item.label,
+                }
               : item,
           )}
         />
 
-        <div className="mt-5 grid items-start gap-8 lg:mt-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
-          <ProductGallery images={product.images} productName={product.name} />
+        <div className="mt-4 grid items-start gap-7 lg:mt-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-10 xl:gap-12">
+          <ProductGallery
+            images={product.images}
+            productName={product.name}
+            categorySlug={product.categorySlug}
+            subcategorySlug={product.subcategorySlug}
+          />
 
-          <div>
-            {product.brand ? (
-              <p className="text-[13px] font-medium tracking-wide text-muted uppercase">
-                {product.brand}
-              </p>
-            ) : (
-              <p className="text-[13px] font-medium tracking-wide text-muted uppercase">
-                {product.category}
-              </p>
-            )}
-            <h1 className="mt-2 font-heading text-[clamp(1.5rem,2vw,2rem)] leading-[1.25] font-semibold break-words text-ink">
+          <div className="min-w-0 lg:pt-1">
+            <p className="text-[12px] font-medium tracking-[0.04em] text-muted uppercase">
+              {product.brand?.trim() || product.category}
+            </p>
+            <h1 className="mt-1.5 font-heading text-[26px] leading-[1.2] font-semibold tracking-[-0.02em] text-balance break-words text-ink sm:text-[30px] lg:text-[34px] xl:text-[36px]">
               {product.name}
             </h1>
             {(product.sku || product.subcategoryName) && (
               <p className="mt-2 text-[13px] text-muted">
                 {product.sku ? `SKU ${product.sku}` : null}
                 {product.sku && product.subcategoryName ? ' · ' : null}
-                {product.subcategoryName}
+                {product.subcategoryName || null}
               </p>
             )}
 
-            <p className="mt-5 text-[clamp(1.5rem,2vw,1.875rem)] font-semibold tracking-tight text-ink">
-              {showPrice && product.price ? formatMoney(product.price) : formatProductPrice(product)}
-              {showPrice && product.compareAtPrice ? (
-                <span className="ml-3 text-[16px] font-normal text-muted line-through">
-                  {formatMoney(product.compareAtPrice)}
-                </span>
-              ) : null}
-            </p>
-            {showPrice ? (
-              <p className="mt-1 text-[13px] text-muted">
-                Prijs incl. btw
-                {product.price?.per === 'm2' ? ' · per m²' : null}
+            <div className="mt-5">
+              <p className="text-[28px] font-semibold tracking-tight text-ink sm:text-[30px]">
+                {showPrice && product.price ? formatMoney(product.price) : formatProductPrice(product)}
+                {showPrice && product.compareAtPrice ? (
+                  <span className="ml-2.5 text-[15px] font-normal text-muted line-through">
+                    {formatMoney(product.compareAtPrice)}
+                  </span>
+                ) : null}
               </p>
-            ) : null}
-
-            <div className="mt-5 space-y-2 rounded-[8px] bg-surface px-4 py-3">
-              <p className="text-[14px] font-medium text-ink">{deliveryFull}</p>
-              <p className="text-[13px] text-muted">{freeShipLabel}</p>
-              {stock ? (
-                <p className="text-[13px] text-muted">{stock.title}</p>
+              {showPrice ? (
+                <p className="mt-1 text-[13px] text-muted">
+                  Incl. btw
+                  {product.price?.per === 'm2' ? ' · per m²' : null}
+                </p>
               ) : null}
             </div>
 
+            <div className="mt-5 space-y-1.5">
+              <p className="inline-flex items-center gap-1.5 text-[14px] font-medium text-ink">
+                <Truck className="h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
+                {deliveryFull}
+              </p>
+              <p className="text-[13px] text-muted">{freeShipLabel}</p>
+              {stock ? <p className="text-[13px] text-muted">{stock.title}</p> : null}
+            </div>
+
             {keySpecs.length ? (
-              <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-2 border-t border-line pt-5 sm:grid-cols-2">
+              <dl className="mt-5 grid grid-cols-1 gap-x-5 gap-y-2.5 border-t border-line pt-5 sm:grid-cols-2">
                 {keySpecs.map((spec) => (
                   <div key={spec.id} className="min-w-0">
                     <dt className="text-[12px] text-muted">{spec.label}</dt>
-                    <dd className="truncate text-[14px] text-ink">{spec.value}</dd>
+                    <dd className="truncate text-[14px] font-medium text-ink">{spec.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -286,27 +369,49 @@ export function ProductPage() {
               />
             ) : null}
 
-            <div ref={ctaRef} className="mt-6 flex flex-wrap items-center gap-3">
+            <div ref={ctaRef} className="mt-6 flex flex-wrap items-center gap-2.5">
               {showCart ? (
                 <>
-                  <label className="sr-only" htmlFor="product-qty">
-                    Aantal
-                  </label>
-                  <input
-                    id="product-qty"
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={qty}
-                    onChange={(event) =>
-                      setQty(Math.max(1, Math.min(99, Number(event.target.value) || 1)))
-                    }
-                    className="h-12 w-16 rounded-[4px] border border-line px-2 text-center text-[15px]"
-                  />
+                  <div
+                    className="inline-flex h-12 items-stretch overflow-hidden rounded-[8px] ring-1 ring-line"
+                    role="group"
+                    aria-label="Aantal"
+                  >
+                    <button
+                      type="button"
+                      className="inline-flex w-11 items-center justify-center text-muted hover:bg-surface hover:text-ink disabled:opacity-40"
+                      aria-label="Aantal verlagen"
+                      disabled={qty <= 1}
+                      onClick={() => setQty((value) => Math.max(1, value - 1))}
+                    >
+                      <Minus className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                    <input
+                      id="product-qty"
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={qty}
+                      aria-label="Aantal"
+                      onChange={(event) =>
+                        setQty(Math.max(1, Math.min(99, Number(event.target.value) || 1)))
+                      }
+                      className="w-12 border-x border-line text-center text-[15px] tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      className="inline-flex w-11 items-center justify-center text-muted hover:bg-surface hover:text-ink disabled:opacity-40"
+                      aria-label="Aantal verhogen"
+                      disabled={qty >= 99}
+                      onClick={() => setQty((value) => Math.min(99, value + 1))}
+                    >
+                      <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                  </div>
                   <Button
                     type="button"
                     variant={quoteProminent ? 'secondary' : 'primary'}
-                    className="h-12 min-w-[180px] flex-1 sm:flex-none"
+                    className="h-12 min-w-[168px] flex-1 sm:flex-none"
                     onClick={add}
                   >
                     In winkelwagen
@@ -317,141 +422,108 @@ export function ProductPage() {
                 <Button
                   to="/zakelijk/offerte"
                   variant={quoteProminent || !showCart ? 'primary' : 'secondary'}
-                  className="h-12 min-w-[160px] flex-1 sm:flex-none"
+                  className="h-12 min-w-[148px] flex-1 sm:flex-none"
                 >
                   Offerte aanvragen
                 </Button>
               ) : null}
-              <div className="relative h-12 w-12 shrink-0">
-                <WishlistButton
-                  slug={product.slug}
-                  name={product.name}
-                  className="top-1 right-1"
-                />
-              </div>
+              <WishlistButton
+                slug={product.slug}
+                name={product.name}
+                className="static relative top-auto right-auto h-12 w-12 shrink-0 rounded-[8px]"
+              />
             </div>
             {added ? (
               <p className="mt-3 text-[14px] text-ink" role="status">
                 Toegevoegd aan winkelwagen.{' '}
-                <Link to="/winkelwagen" className="text-brand hover:underline">
+                <Link to="/winkelwagen" className="font-medium text-brand hover:underline">
                   Bekijken
                 </Link>
               </p>
             ) : null}
 
-            <ul className="mt-6 space-y-1.5 text-[13px] text-muted">
-              <li>{deliveryFull}</li>
-              <li>{freeShipLabel}</li>
-              <li>Bezorging op het afleveradres in Nederland en België</li>
-              {presentation.serviceLinks.map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="text-brand hover:underline">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <p className="mt-5 text-[12px] leading-relaxed text-muted">
+              Bezorging op het afleveradres in Nederland en België.
+              {presentation.serviceLinks
+                .filter((link) => link.href !== '/montage')
+                .map((link) => (
+                  <span key={link.href}>
+                    {' '}
+                    ·{' '}
+                    <Link to={link.href} className="text-brand hover:underline">
+                      {link.label}
+                    </Link>
+                  </span>
+                ))}
+            </p>
           </div>
         </div>
 
-        <div className="mt-12 max-w-[820px] md:mt-16" id="product-details">
-          <div className="flex flex-wrap gap-2 border-b border-line">
-            {(
-              [
-                ['desc', 'Productomschrijving'],
-                ['specs', 'Specificaties'],
-                ['delivery', 'Levering & retour'],
-              ] as const
-            ).map(([id, label]) => (
+        {/* Desktop tabs */}
+        <div className="mt-12 hidden max-w-3xl md:mt-14 md:block" id="product-details">
+          <div className="flex flex-wrap gap-1 border-b border-line">
+            {detailSections.map((section) => (
               <button
-                key={id}
+                key={section.id}
                 type="button"
-                onClick={() => setOpenSection(id)}
+                onClick={() => setOpenSection(section.id)}
                 className={cn(
-                  'border-b-2 px-3 py-3 text-[14px] font-medium',
-                  openSection === id
+                  'border-b-2 px-3 py-3 text-[14px] font-medium transition-colors',
+                  openSection === section.id
                     ? 'border-brand text-ink'
                     : 'border-transparent text-muted hover:text-ink',
                 )}
               >
-                {label}
+                {section.label}
               </button>
             ))}
           </div>
           <div className="py-6">
-            {openSection === 'desc' ? (
-              <div className="space-y-4 text-[15px] leading-relaxed text-ink/85">
-                {product.description || product.shortDescription ? (
-                  <p>{product.description || product.shortDescription}</p>
-                ) : (
-                  <p className="text-muted">Nog geen omschrijving beschikbaar.</p>
-                )}
-              </div>
-            ) : null}
-            {openSection === 'specs' ? (
-              <div id="specificaties">
-              {allSpecs.length ? (
-                <table className="w-full text-left text-[14px]">
-                  <tbody>
-                    {allSpecs.map((spec, index) => (
-                      <tr key={`${spec.id}-${spec.label}`} className={index % 2 === 0 ? 'bg-surface' : undefined}>
-                        <th className="w-[40%] px-3 py-2.5 font-medium text-muted">{spec.label}</th>
-                        <td className="px-3 py-2.5 text-ink">{spec.value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-[15px] text-muted">Nog geen specificaties beschikbaar.</p>
-              )}
-              </div>
-            ) : null}
-            {openSection === 'delivery' ? (
-              <div id="bezorgen" className="space-y-3 text-[15px] leading-relaxed text-ink/85">
-                <p>
-                  {deliveryFull}. Wij leveren bestellingen in Nederland en België op het opgegeven
-                  afleveradres.
-                </p>
-                <p>{freeShippingThresholdLabel()}.</p>
-                <p>
-                  Afhankelijk van het product en de logistiek kan een bestelling in meerdere
-                  zendingen aankomen. Montage is niet standaard inbegrepen.
-                </p>
-                <p>
-                  <Link to="/bezorgen" className="text-brand hover:underline">
-                    Meer over levering
-                  </Link>
-                  {' · '}
-                  <Link to="/retourneren" className="text-brand hover:underline">
-                    Retourneren
-                  </Link>
-                </p>
-              </div>
-            ) : null}
+            {detailSections.find((section) => section.id === openSection)?.content}
           </div>
         </div>
 
-        {presentation.serviceLinks.some((link) => link.href === '/montage') ? (
-          <section className="mt-10 rounded-[12px] bg-surface px-5 py-6 md:px-8">
-            <h2 className="font-heading text-[20px] font-semibold text-ink">Vloer laten leggen?</h2>
-            <p className="mt-2 max-w-2xl text-[15px] text-muted">
+        {/* Mobile stacked sections */}
+        <div className="mt-10 space-y-8 md:hidden">
+          {detailSections.map((section) => (
+            <section key={section.id} aria-labelledby={`mobile-${section.id}`}>
+              <h2
+                id={`mobile-${section.id}`}
+                className="font-heading text-[18px] font-semibold text-ink"
+              >
+                {section.label}
+              </h2>
+              <div className="mt-3">{section.content}</div>
+            </section>
+          ))}
+        </div>
+
+        {montageLink ? (
+          <section className="mt-10 rounded-[12px] bg-surface px-5 py-6 ring-1 ring-line md:mt-12 md:px-7">
+            <h2 className="font-heading text-[18px] font-semibold text-ink md:text-[20px]">
+              Montage / service
+            </h2>
+            <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
               Voor montage kunnen wij u doorverwijzen naar AllRoundKlussenbedrijf.
             </p>
             <div className="mt-4">
-              <Button to="/montage" variant="secondary">
-                Montage aanvragen
+              <Button to={montageLink.href} variant="secondary" size="sm">
+                {montageLink.label.includes('leggen') ? 'Montage aanvragen' : montageLink.label}
               </Button>
             </div>
           </section>
         ) : null}
 
         {(related.data?.length ?? 0) > 0 ? (
-          <section aria-labelledby="related-heading" className="mt-12 md:mt-16">
-            <h2 id="related-heading" className="heading-section text-ink">
-              Vergelijkbare producten
+          <section aria-labelledby="related-heading" className="mt-12 md:mt-14">
+            <h2 id="related-heading" className="font-heading text-[20px] font-semibold text-ink md:text-[22px]">
+              Gerelateerde producten
             </h2>
-            <div className="mt-5">
-              <ProductGrid products={related.data ?? []} />
+            <div className="mt-4">
+              <ProductGrid
+                products={(related.data ?? []).slice(0, 4)}
+                className="md:grid-cols-4 xl:grid-cols-4"
+              />
             </div>
           </section>
         ) : null}

@@ -53,7 +53,7 @@ export function LegalDocument({ doc, extra }: { doc: LegalDoc; extra?: ReactNode
       />
       <Container>
         <article className="mx-auto max-w-[42rem]">
-          <h1 className="heading-display text-navy">{doc.title}</h1>
+          <h1 className="heading-page text-navy">{doc.title}</h1>
           <p className="text-body mt-4 text-ink">{doc.intro}</p>
           <p className="mt-4 rounded-[8px] bg-surface px-4 py-3 text-[13px] leading-relaxed text-muted">
             {CONCEPT_NOTICE}

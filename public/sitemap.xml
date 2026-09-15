@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://www.allrounddirect.nl/sitemap-static.xml</loc>
+    <loc>https://allrounddirect.com/sitemap-static.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.allrounddirect.nl/sitemap-categories.xml</loc>
+    <loc>https://allrounddirect.com/sitemap-categories.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.allrounddirect.nl/sitemap-products.xml</loc>
+    <loc>https://allrounddirect.com/sitemap-products.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://www.allrounddirect.nl/sitemap-content.xml</loc>
+    <loc>https://allrounddirect.com/sitemap-content.xml</loc>
   </sitemap>
 </sitemapindex>

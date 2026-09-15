@@ -120,7 +120,7 @@ export function GuestOrderPage() {
       ) : (
         <AuthCard
           title="Bestelling volgen"
-          description="Voer het ordernummer en het e-mailadres van de bestelling in. Alleen die combinatie geeft toegang — niet alleen het ordernummer."
+          description="Voer het ordernummer en het e-mailadres van de bestelling in. Alleen die combinatie geeft toegang, niet alleen het ordernummer."
         >
           <form className="space-y-4" onSubmit={onSubmit}>
             <TextField

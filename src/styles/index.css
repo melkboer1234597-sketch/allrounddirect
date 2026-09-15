@@ -10,9 +10,9 @@
   --color-brand-active: #0556a3;
   --color-brand-bright: #1597f5;
   --color-ink: #151a21;
-  --color-muted: #626a76;
+  --color-muted: #5c6570;
   --color-surface: #f6f8fa;
-  --color-line: #e3e7ec;
+  --color-line: #e6eaee;
 }
 
 :root {
@@ -25,29 +25,39 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  /* Mobile section rhythm */
   --space-section: 40px;
-  --radius-control: 4px;
+  --space-section-tight: 32px;
+  --space-page-top: 28px;
+  --radius-control: 8px;
+  --radius-button: 8px;
+  --radius-card: 10px;
   --radius-media: 12px;
   /* Sticky topbar + header (+ mobile search). Used by scroll helpers + scroll-margin. */
   --app-header-offset: 140px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   :root {
-    --app-header-offset: 112px;
-    --space-section: 72px;
+    --space-section: 56px;
+    --space-section-tight: 44px;
+    --space-page-top: 40px;
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   :root {
+    --app-header-offset: 112px;
     --space-section: 64px;
+    --space-section-tight: 52px;
+    --space-page-top: 48px;
   }
 }
 
 @media (min-width: 1440px) {
   :root {
-    --space-section: 80px;
+    --space-section: 72px;
+    --space-section-tight: 56px;
   }
 }
 
@@ -104,33 +114,51 @@ a {
   font-family: var(--font-heading);
 }
 
+/* Hero only — keep expressive but not gigantic */
 .heading-display {
   font-family: var(--font-heading);
   font-weight: 600;
   letter-spacing: -0.025em;
   line-height: 1.12;
   text-wrap: balance;
-  font-size: clamp(2.0625rem, 1.4rem + 3.2vw, 3.375rem);
+  font-size: clamp(1.75rem, 1.35rem + 2vw, 2.75rem); /* ~28–44px */
+}
+
+/* Interior page H1 */
+.heading-page {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.15;
+  text-wrap: balance;
+  font-size: clamp(1.625rem, 1.35rem + 1.4vw, 2.25rem); /* ~26–36px */
 }
 
 .heading-section {
   font-family: var(--font-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.18;
+  line-height: 1.2;
   text-wrap: balance;
-  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.125rem);
+  font-size: clamp(1.375rem, 1.2rem + 0.9vw, 1.875rem); /* ~22–30px */
 }
 
 .text-body {
-  font-size: 1rem;
-  line-height: 1.65;
-  max-width: 65ch;
+  font-size: 0.96875rem; /* 15.5px */
+  line-height: 1.6;
+  max-width: 62ch;
+}
+
+@media (min-width: 768px) {
+  .text-body {
+    font-size: 1rem; /* 16px */
+    line-height: 1.62;
+  }
 }
 
 .container-page {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1240px;
   margin-inline: auto;
   padding-inline: 16px;
 }
@@ -143,18 +171,26 @@ a {
 
 @media (min-width: 768px) {
   .container-page {
-    padding-inline: 32px;
+    padding-inline: 28px;
   }
 }
 
 @media (min-width: 1024px) {
   .container-page {
-    padding-inline: 40px;
+    padding-inline: 36px;
   }
 }
 
 .section-space {
   padding-block: var(--space-section);
+}
+
+.section-space-tight {
+  padding-block: var(--space-section-tight);
+}
+
+.page-shell {
+  padding-block: var(--space-page-top) var(--space-section);
 }
 
 .hide-scrollbar {
@@ -164,6 +200,23 @@ a {
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.category-tabs {
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-tabs > li {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 767px) {
+  .category-tabs {
+    scroll-snap-type: x mandatory;
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
 }
 
 .category-scroll {
@@ -202,7 +255,7 @@ a {
   left: 16px;
   top: -48px;
   z-index: 80;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--color-navy);
   padding: 8px 12px;
   color: #fff;

@@ -1,37 +1,22 @@
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
-import { assets } from '@/lib/assets'
 
 export function AboutSection() {
   return (
-    <section
-      aria-labelledby="about-heading"
-      className="border-t border-line bg-surface/70 py-12 md:py-14 lg:py-16"
-    >
-      <Container>
-        <div className="relative max-w-2xl overflow-hidden">
-          <div
-            className="pointer-events-none absolute -top-8 -right-10 h-28 w-28 opacity-[0.07]"
-            style={{
-              backgroundImage: `url(${assets.brandPattern})`,
-              backgroundSize: 'cover',
-            }}
-            aria-hidden
-          />
-          <h2 id="about-heading" className="heading-section text-ink">
+    <section aria-labelledby="about-heading" className="border-t border-line">
+      <Container className="flex flex-col gap-3 py-8 md:flex-row md:items-end md:justify-between md:gap-8 md:py-9 lg:py-10">
+        <div className="max-w-xl min-w-0">
+          <h2 id="about-heading" className="font-heading text-[20px] font-semibold tracking-tight text-ink md:text-[22px]">
             Over AllRound Direct
           </h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted">
-            AllRound Direct levert producten voor wonen, verbouwen, horeca en professioneel gebruik.
-            We werken met verschillende leveranciers en bieden ons assortiment aan particuliere en
-            zakelijke klanten in Nederland en België.
+          <p className="mt-1.5 text-[14px] leading-relaxed text-muted md:text-[15px]">
+            Assortiment voor wonen, verbouwen, horeca en professioneel gebruik. Voor particulier en
+            zakelijk in Nederland en België.
           </p>
-          <div className="mt-5">
-            <Button to="/over-ons" variant="secondary">
-              Meer over ons
-            </Button>
-          </div>
         </div>
+        <Button to="/over-ons" variant="secondary" size="sm" className="shrink-0 self-start md:self-auto">
+          Over ons
+        </Button>
       </Container>
     </section>
   )

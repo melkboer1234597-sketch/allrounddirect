@@ -12,3 +12,4 @@ Disallow: /admin
 Disallow: /scotdejewish
 Disallow: /api
 
+Sitemap: https://allrounddirect.com/sitemap.xml

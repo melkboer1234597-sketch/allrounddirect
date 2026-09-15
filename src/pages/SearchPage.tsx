@@ -20,7 +20,7 @@ export function SearchPage() {
       />
       <Container>
         <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Zoeken' }]} />
-        <h1 className="heading-display mt-4 text-ink">{heading}</h1>
+        <h1 className="heading-page mt-4 text-ink">{heading}</h1>
         <p className="mt-3 text-[15px] text-muted">
           Resultaten op productnaam, SKU, merk en categorie.
         </p>

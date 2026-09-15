@@ -6,9 +6,18 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string
   error?: string
   hint?: ReactNode
+  labelAside?: ReactNode
 }
 
-export function TextField({ label, error, hint, className, id, ...rest }: FieldProps) {
+export function TextField({
+  label,
+  error,
+  hint,
+  labelAside,
+  className,
+  id,
+  ...rest
+}: FieldProps) {
   const generated = useId()
   const fieldId = id ?? generated
   const errorId = `${fieldId}-error`
@@ -18,14 +27,17 @@ export function TextField({ label, error, hint, className, id, ...rest }: FieldP
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={fieldId} className="block text-[14px] font-medium text-ink">
-        {label}
-      </label>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor={fieldId} className="block text-[14px] font-medium text-ink">
+          {label}
+        </label>
+        {labelAside ? <div className="shrink-0 text-[13px]">{labelAside}</div> : null}
+      </div>
       <input
         id={fieldId}
         className={cn(
-          'h-11 w-full rounded-[4px] border border-line bg-white px-3 text-[15px] text-ink outline-none focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20',
-          error && 'border-red-600',
+          'h-11 w-full rounded-[8px] border border-line bg-white px-3 text-[16px] text-ink outline-none transition-[border-color,box-shadow] focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20 md:text-[15px]',
+          error && 'border-red-600 focus-visible:border-red-600 focus-visible:ring-red-600/15',
           className,
         )}
         aria-invalid={error ? true : undefined}
@@ -46,7 +58,7 @@ export function TextField({ label, error, hint, className, id, ...rest }: FieldP
   )
 }
 
-export function PasswordField({ label, error, hint, ...rest }: FieldProps) {
+export function PasswordField({ label, error, hint, labelAside, ...rest }: FieldProps) {
   const [visible, setVisible] = useState(false)
   const generated = useId()
   const fieldId = rest.id ?? generated
@@ -57,29 +69,33 @@ export function PasswordField({ label, error, hint, ...rest }: FieldProps) {
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={fieldId} className="block text-[14px] font-medium text-ink">
-        {label}
-      </label>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor={fieldId} className="block text-[14px] font-medium text-ink">
+          {label}
+        </label>
+        {labelAside ? <div className="shrink-0 text-[13px]">{labelAside}</div> : null}
+      </div>
       <div className="relative">
         <input
           {...rest}
           id={fieldId}
           type={visible ? 'text' : 'password'}
           className={cn(
-            'h-11 w-full rounded-[4px] border border-line bg-white px-3 pr-12 text-[15px] text-ink outline-none focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20',
-            error && 'border-red-600',
+            'h-11 w-full rounded-[8px] border border-line bg-white px-3 pr-12 text-[16px] text-ink outline-none transition-[border-color,box-shadow] focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20 md:text-[15px]',
+            error && 'border-red-600 focus-visible:border-red-600 focus-visible:ring-red-600/15',
           )}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
         />
         <button
           type="button"
-          className="absolute top-0 right-0 inline-flex h-11 w-11 items-center justify-center text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="absolute top-0 right-0 inline-flex h-11 w-11 items-center justify-center rounded-r-[8px] text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           onClick={() => setVisible((value) => !value)}
           aria-pressed={visible}
           aria-label={visible ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+          tabIndex={-1}
         >
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {visible ? <EyeOff className="h-4 w-4" strokeWidth={1.75} /> : <Eye className="h-4 w-4" strokeWidth={1.75} />}
         </button>
       </div>
       {hint ? (
@@ -110,12 +126,12 @@ export function CheckField({ label, checked, onChange, error, name, required }: 
   const errorId = `${id}-error`
   return (
     <div>
-      <label htmlFor={id} className="flex gap-3 text-[14px] text-ink">
+      <label htmlFor={id} className="flex gap-3 text-[14px] leading-snug text-ink">
         <input
           id={id}
           name={name}
           type="checkbox"
-          className="mt-1 h-4 w-4 rounded-[3px] border-line text-brand focus-visible:ring-brand"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border-line accent-brand focus-visible:ring-brand"
           checked={checked}
           required={required}
           aria-invalid={error ? true : undefined}
@@ -125,7 +141,7 @@ export function CheckField({ label, checked, onChange, error, name, required }: 
         <span>{label}</span>
       </label>
       {error ? (
-        <p id={errorId} className="mt-1 text-[13px] text-red-700" role="alert">
+        <p id={errorId} className="mt-1.5 text-[13px] text-red-700" role="alert">
           {error}
         </p>
       ) : null}

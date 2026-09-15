@@ -27,7 +27,7 @@ export function AdviesHubPage() {
       <Container>
         <article className="mx-auto max-w-[42rem]">
           <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Advies' }]} />
-          <h1 className="heading-display mt-4 text-navy">Advies</h1>
+          <h1 className="heading-page mt-4 text-navy">Advies</h1>
           <p className="text-body mt-4 text-ink">
             Hier komen keuzegidsen en rekenhulpen die bij het assortiment horen. We publiceren
             alleen onderwerpen die we inhoudelijk kunnen onderhouden. Clusters zonder artikel zijn

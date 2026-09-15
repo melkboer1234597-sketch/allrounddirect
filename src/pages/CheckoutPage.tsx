@@ -5,7 +5,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { SeoHead } from '@/components/seo/SeoHead'
 import { FreeShippingProgress } from '@/components/commerce/FreeShippingProgress'
+import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { apiFetch, ApiError } from '@/lib/api'
 import { clearCart, useCart, type CartLine } from '@/lib/cart'
 import { formatCentsNl } from '@/lib/format-cents'
@@ -400,11 +402,12 @@ export function CheckoutPage() {
         </div>
 
         {empty ? (
-          <div className="mt-10 rounded-[10px] bg-white px-5 py-8 ring-1 ring-line">
-            <p className="text-[15px] text-muted">Uw winkelwagen is leeg.</p>
-            <Link to="/assortiment" className="mt-4 inline-block text-[15px] font-medium text-brand hover:underline">
-              Naar assortiment
-            </Link>
+          <div className="mt-6">
+            <EmptyState
+              title="Uw winkelwagen is leeg"
+              description="Voeg eerst producten toe voordat u kunt afrekenen."
+              action={<Button to="/assortiment">Naar assortiment</Button>}
+            />
           </div>
         ) : (
           <div className="mt-6 grid items-start gap-6 lg:mt-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.95fr)] lg:gap-10">

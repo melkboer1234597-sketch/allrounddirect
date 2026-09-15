@@ -57,7 +57,7 @@ export function QuotePage() {
       />
       <Container>
         <div className="mx-auto max-w-[42rem]">
-          <h1 className="heading-display text-navy">Zakelijke offerte</h1>
+          <h1 className="heading-page text-navy">Zakelijke offerte</h1>
           <p className="text-body mt-4 text-ink">
             Voor grotere aantallen, horeca of een project. Dit is geen webshop-checkout. We reageren
             op het opgegeven e-mailadres. Voor een enkele consumentenbestelling gebruikt u de

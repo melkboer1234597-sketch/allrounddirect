@@ -146,7 +146,10 @@ export function OrderDetailView({ order, showReturnLink = true }: OrderDetailVie
           <Link to="/herroepen" className="text-brand hover:underline">
             Retour of herroeping
           </Link>
-          <span className="text-muted"> — beschikbaar wanneer uw bestelling daarvoor in aanmerking komt.</span>
+          <span className="text-muted">
+            {' '}
+            (beschikbaar wanneer uw bestelling daarvoor in aanmerking komt)
+          </span>
         </p>
       ) : null}
 

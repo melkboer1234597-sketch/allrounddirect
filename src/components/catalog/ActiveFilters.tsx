@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { CatalogQuery } from '@/types/catalog'
 import { FILTER_SCHEMAS } from '@/data/filter-schemas'
 
@@ -16,7 +17,7 @@ export function ActiveFilters({ schemaId, query, onChange, clearHref }: ActiveFi
   if (query.priceMin != null || query.priceMax != null) {
     chips.push({
       key: 'price',
-      label: `€${query.priceMin ?? 0} - €${query.priceMax ?? '…'}`,
+      label: `Prijs: €${query.priceMin ?? 0}–€${query.priceMax ?? '…'}`,
       remove: () => ({ ...query, page: 1, priceMin: undefined, priceMax: undefined }),
     })
   }
@@ -30,9 +31,10 @@ export function ActiveFilters({ schemaId, query, onChange, clearHref }: ActiveFi
   Object.entries(query.filters ?? {}).forEach(([id, values]) => {
     const def = schema.find((item) => item.id === id)
     values.forEach((value) => {
+      const optionLabel = def?.options?.find((item) => item.value === value)?.label ?? value
       chips.push({
         key: `${id}-${value}`,
-        label: def?.options?.find((item) => item.value === value)?.label ?? value,
+        label: def?.label ? `${def.label}: ${optionLabel}` : optionLabel,
         remove: () => {
           const next = { ...(query.filters ?? {}) }
           next[id] = (next[id] ?? []).filter((item) => item !== value)
@@ -46,23 +48,22 @@ export function ActiveFilters({ schemaId, query, onChange, clearHref }: ActiveFi
   if (!chips.length) return null
 
   return (
-    <div className="mb-5 flex flex-wrap items-center gap-2">
-      <span className="text-[13px] text-muted">Actieve filters:</span>
+    <div className="mb-4 flex flex-wrap items-center gap-1.5">
       {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
           onClick={() => onChange(chip.remove())}
-          className="inline-flex min-h-8 items-center gap-1 rounded-[4px] bg-surface px-2 text-[13px] text-ink ring-1 ring-line"
+          className="inline-flex h-8 max-w-full items-center gap-1 rounded-[6px] bg-surface px-2 text-[12px] text-ink ring-1 ring-line hover:ring-navy/20"
         >
-          {chip.label}
-          <X className="h-3.5 w-3.5" aria-hidden />
+          <span className="truncate">{chip.label}</span>
+          <X className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
           <span className="sr-only">Filter verwijderen</span>
         </button>
       ))}
-      <a href={clearHref} className="text-[13px] text-brand hover:underline">
-        Alles wissen
-      </a>
+      <Link to={clearHref} className="ml-1 text-[12px] font-medium text-brand hover:underline">
+        Filters wissen
+      </Link>
     </div>
   )
 }

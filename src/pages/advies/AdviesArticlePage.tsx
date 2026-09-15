@@ -98,7 +98,7 @@ export function AdviesArticlePage() {
               { label: article.title },
             ]}
           />
-          <h1 className="heading-display mt-4 text-navy">{article.title}</h1>
+          <h1 className="heading-page mt-4 text-navy">{article.title}</h1>
           <p className="text-body mt-4 text-ink">{article.description}</p>
           {article.sections.map((section) => (
             <section key={section.heading} className="mt-8">

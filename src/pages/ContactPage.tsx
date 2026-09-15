@@ -50,7 +50,7 @@ export function ContactPage() {
       />
       <Container>
         <div className="mx-auto max-w-[42rem]">
-          <h1 className="heading-display text-navy">Contact</h1>
+          <h1 className="heading-page text-navy">Contact</h1>
           <p className="text-body mt-4 text-ink">
             Heeft u een vraag over een product, levering of een zakelijke aanvraag? Stuur een
             bericht. Voor herroeping van een aankoop gebruikt u bij voorkeur{' '}

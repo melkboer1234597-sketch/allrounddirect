@@ -25,6 +25,8 @@ export default tseslint.config(
     },
     rules: {
       'prettier/prettier': 'warn',
+      // TypeScript already checks undefined identifiers; no-undef fights browser/worker globals.
+      'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

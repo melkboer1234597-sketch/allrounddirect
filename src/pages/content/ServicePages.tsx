@@ -20,7 +20,7 @@ function ServicePage({ path, title, description, intro, sections }: ServicePageP
       <Container>
         <article className="mx-auto max-w-[42rem]">
           <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: title }]} />
-          <h1 className="heading-display mt-4 text-navy">{title}</h1>
+          <h1 className="heading-page mt-4 text-navy">{title}</h1>
           <p className="text-body mt-4 text-ink">{intro}</p>
           {sections.map((section) => (
             <section key={section.heading} className="mt-8">

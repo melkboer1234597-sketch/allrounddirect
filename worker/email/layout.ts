@@ -51,7 +51,7 @@ export function transactionalLayout(input: {
             <td style="background:${NAVY};padding:16px 20px;font-size:12px;line-height:1.5;color:#c9d3e0">
               AllRound Direct<br />
               Wonen, keuken, vloer, horeca en zakelijk.<br />
-              <a href="${escapeHtml(input.origin)}" style="color:#ffffff;text-decoration:underline">allrounddirect.nl</a>
+              <a href="${escapeHtml(input.origin)}" style="color:#ffffff;text-decoration:underline">allrounddirect.com</a>
             </td>
           </tr>
         </table>

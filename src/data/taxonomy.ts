@@ -202,7 +202,7 @@ export const CATALOG_TAXONOMY: TaxonomyRoot[] = [
   {
     slug: 'keuken',
     name: 'Keuken',
-    intro: 'Kasten, bladen, spoelbakken, kranen en keukenapparatuur.',
+    intro: 'Kasten, werkbladen, spoelbakken, kranen en keukenapparatuur.',
     seoDescription: 'Keukenproducten en onderdelen voor thuis en professioneel gebruik.',
     filterSchema: 'kitchen',
     image: assets.hero,

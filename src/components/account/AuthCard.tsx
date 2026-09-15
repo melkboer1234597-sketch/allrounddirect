@@ -1,24 +1,42 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Container } from '@/components/ui/Container'
+import { cn } from '@/lib/cn'
 
 export function AuthCard({
   title,
   description,
   children,
+  className,
+  panelClassName,
 }: {
   title: string
   description?: string
   children: ReactNode
+  className?: string
+  panelClassName?: string
 }) {
   return (
-    <main id="main" className="bg-surface py-10 md:py-16">
+    <main
+      id="main"
+      className={cn(
+        'page-shell flex min-h-[calc(100dvh-var(--app-header-offset))] flex-col justify-center bg-surface pb-16 md:pb-20',
+        className,
+      )}
+    >
       <Container>
-        <div className="mx-auto max-w-md rounded-[12px] bg-white p-6 shadow-[0_8px_30px_-18px_rgba(7,31,63,0.35)] ring-1 ring-line md:p-8">
-          <h1 className="font-heading text-[28px] leading-tight font-semibold text-navy">
+        <div
+          className={cn(
+            'mx-auto w-full max-w-md rounded-[12px] bg-white px-6 py-7 ring-1 ring-line sm:px-8 sm:py-8',
+            panelClassName,
+          )}
+        >
+          <h1 className="font-heading text-[26px] leading-tight font-semibold tracking-[-0.02em] text-ink md:text-[28px]">
             {title}
           </h1>
-          {description ? <p className="mt-2 text-[15px] text-muted">{description}</p> : null}
+          {description ? (
+            <p className="mt-2 text-[15px] leading-relaxed text-muted">{description}</p>
+          ) : null}
           <div className="mt-6">{children}</div>
         </div>
       </Container>

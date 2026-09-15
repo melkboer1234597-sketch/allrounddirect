@@ -24,7 +24,7 @@ export function SearchForm({ className, id = 'site-search', compact = false }: S
       <label htmlFor={id} className="sr-only">
         Zoeken
       </label>
-      <div className="flex h-11 items-center rounded-[4px] bg-surface ring-1 ring-line focus-within:ring-2 focus-within:ring-brand">
+      <div className="flex h-11 items-center rounded-[8px] bg-surface ring-1 ring-line focus-within:ring-2 focus-within:ring-brand">
         <Search
           className="ml-3 h-[18px] w-[18px] shrink-0 text-muted"
           strokeWidth={1.75}

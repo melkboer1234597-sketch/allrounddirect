@@ -43,7 +43,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   return (
     <article className={cn('group relative flex h-full flex-col', className)}>
-      <div className="relative overflow-hidden rounded-[12px] bg-[#F7F8FA]">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#F7F8FA]">
         <Link
           to={href}
           className="block aspect-[4/3] overflow-hidden"

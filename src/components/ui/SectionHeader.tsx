@@ -22,7 +22,7 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        'mb-6 flex flex-col gap-2 md:mb-8 md:flex-row md:items-end md:justify-between md:gap-6',
+        'mb-5 flex flex-col gap-2 md:mb-6 md:flex-row md:items-end md:justify-between md:gap-6',
         className,
       )}
     >

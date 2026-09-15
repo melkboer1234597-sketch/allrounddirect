@@ -7,6 +7,7 @@ import { FILTER_SCHEMAS } from '@/data/filter-schemas'
 import { apiFetch } from '@/lib/api'
 import { DEFAULT_PAGE_SIZE } from '@/lib/catalog-url'
 import { filterSchemaForCategory } from '@/lib/product-presentation'
+import { getPresentationConfig } from '../../shared/product-presentation'
 import { CATALOG_TAXONOMY } from '@/data/taxonomy'
 import type {
   CatalogProduct,
@@ -146,12 +147,24 @@ function liveQueryPath(query: CatalogQuery) {
 export async function queryCatalog(query: CatalogQuery): Promise<CatalogQueryResult> {
   if (USE_LIVE_API) {
     try {
-      return await apiFetch<CatalogQueryResult>(liveQueryPath(query))
+      const live = await apiFetch<CatalogQueryResult>(liveQueryPath(query))
+      // Local D1 is often empty; keep redesign/dev workable with demo data.
+      if (import.meta.env.DEV && live.total === 0 && !query.priceMin && !query.priceMax && !query.outlet) {
+        const hasFilters = Object.values(query.filters ?? {}).some((values) => values.length > 0)
+        if (!hasFilters) {
+          return queryCatalogDemo(query)
+        }
+      }
+      return live
     } catch {
       // Worker niet bereikbaar: val terug op demo tot de API live is.
     }
   }
 
+  return queryCatalogDemo(query)
+}
+
+function queryCatalogDemo(query: CatalogQuery): CatalogQueryResult {
   const filtered = DEMO_CATALOG.filter((item) => matchesFilters(item, query))
   const sorted = sortProducts(filtered, query.sort)
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
@@ -214,19 +227,38 @@ export async function getRelatedProducts(slug: string): Promise<CatalogProduct[]
       const live = await apiFetch<{ items: CatalogProduct[] }>(
         `/products/${encodeURIComponent(slug)}/related`,
       )
-      return live.items
+      if (live.items.length) return live.items.slice(0, 4)
     } catch {
       /* demo fallback */
     }
   }
   const current = await getProductBySlug(slug)
   if (!current) return []
-  return DEMO_CATALOG.filter(
-    (item) =>
-      item.slug !== slug &&
-      item.categorySlug === current.categorySlug &&
-      item.images.length > 0,
-  ).slice(0, 4)
+  return pickRelatedDemo(current)
+}
+
+function pickRelatedDemo(current: CatalogProduct): CatalogProduct[] {
+  const config = getPresentationConfig(current.categorySlug, current.subcategorySlug)
+  const pool = DEMO_CATALOG.filter((item) => item.slug !== current.slug && item.images.length > 0)
+  const picked: CatalogProduct[] = []
+  const seen = new Set<string>()
+
+  function take(predicate: (item: CatalogProduct) => boolean) {
+    for (const item of pool) {
+      if (picked.length >= 4) return
+      if (seen.has(item.slug) || !predicate(item)) continue
+      seen.add(item.slug)
+      picked.push(item)
+    }
+  }
+
+  if (config.related.preferSubcategory) {
+    take((item) => item.subcategorySlug === current.subcategorySlug)
+  }
+  take((item) => config.related.complementarySubcategorySlugs.includes(item.subcategorySlug))
+  take((item) => config.related.complementaryCategorySlugs.includes(item.categorySlug))
+  take((item) => item.categorySlug === current.categorySlug)
+  return picked.slice(0, 4)
 }
 
 export async function suggestSearch(q: string): Promise<{

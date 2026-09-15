@@ -6,8 +6,8 @@ import { TrustStrip } from '@/components/home/TrustStrip'
 import { FeaturedProducts } from '@/components/home/FeaturedProducts'
 import { FlooringServiceSection } from '@/components/home/FlooringServiceSection'
 import { BusinessSection } from '@/components/home/BusinessSection'
-import { OutletSection } from '@/components/home/OutletSection'
 import { DeliverySection } from '@/components/home/DeliverySection'
+import { OutletSection } from '@/components/home/OutletSection'
 import { AboutSection } from '@/components/home/AboutSection'
 import { NewsletterSection } from '@/components/home/NewsletterSection'
 
@@ -28,8 +28,8 @@ export function HomePage() {
         <FeaturedProducts />
         <FlooringServiceSection />
         <BusinessSection />
-        <OutletSection />
         <DeliverySection />
+        <OutletSection />
         <AboutSection />
         <NewsletterSection />
       </main>

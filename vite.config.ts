@@ -20,7 +20,7 @@ function writeSeoFiles(outDir: string, origin: string) {
   const disallow = ROBOTS_DISALLOW.map((item) => `Disallow: ${item}`).join('\n')
   const sitemapLine = origin ? `\nSitemap: ${origin}/sitemap.xml\n` : '\n'
   const robots = `# robots.txt stuurt crawlers; het is geen beveiliging.\nUser-agent: *\nAllow: /\n${disallow}\n${sitemapLine}`
-  const locOrigin = origin || 'https://www.allrounddirect.nl'
+  const locOrigin = origin || 'https://allrounddirect.com'
 
   fs.mkdirSync(outDir, { recursive: true })
   fs.writeFileSync(path.join(outDir, 'robots.txt'), robots)

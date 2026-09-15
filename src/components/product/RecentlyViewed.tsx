@@ -48,12 +48,15 @@ export function RecentlyViewed({ excludeSlug }: { excludeSlug?: string }) {
   if (!products.length) return null
 
   return (
-    <section aria-labelledby="recent-heading" className="mt-12 md:mt-16">
-      <h2 id="recent-heading" className="heading-section text-ink">
+    <section aria-labelledby="recent-heading" className="mt-12 md:mt-14">
+      <h2 id="recent-heading" className="font-heading text-[20px] font-semibold text-ink md:text-[22px]">
         Recent bekeken
       </h2>
-      <div className="mt-5">
-        <ProductGrid products={products.slice(0, 4)} />
+      <div className="mt-4">
+        <ProductGrid
+          products={products.slice(0, 4)}
+          className="md:grid-cols-4 xl:grid-cols-4"
+        />
       </div>
     </section>
   )

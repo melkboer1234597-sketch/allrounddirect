@@ -29,7 +29,7 @@ export function CoverImage({
       loading={loading}
       fetchPriority={fetchPriority}
       decoding="async"
-      className={cn('h-full w-full object-cover', className)}
+      className={cn('w-full object-cover', className)}
     />
   )
 }

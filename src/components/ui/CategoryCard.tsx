@@ -7,19 +7,15 @@ type CategoryCardProps = {
   image: string
   imageAlt: string
   cta?: string
-  /** Editorial sizes — fixed heights, not huge aspect cards */
   size?: 'large' | 'medium' | 'compact'
   objectPosition?: string
   className?: string
 }
 
 const sizeClass = {
-  large:
-    'min-h-[150px] h-[clamp(150px,38vw,190px)] md:h-[clamp(220px,24vw,280px)] lg:h-[clamp(260px,22vw,310px)]',
-  medium:
-    'min-h-[150px] h-[clamp(150px,38vw,185px)] md:h-[clamp(190px,22vw,240px)] lg:h-[clamp(200px,18vw,248px)]',
-  compact:
-    'min-h-[145px] h-[clamp(145px,36vw,175px)] md:h-[clamp(180px,20vw,220px)] lg:h-[clamp(190px,16vw,230px)]',
+  large: 'aspect-[16/10] min-h-[148px] lg:aspect-auto lg:h-[min(300px,28vw)] lg:min-h-[260px]',
+  medium: 'aspect-[4/3] min-h-[132px] lg:aspect-auto lg:h-[min(232px,20vw)] lg:min-h-[200px]',
+  compact: 'aspect-[4/3] min-h-[120px] lg:aspect-auto lg:h-[min(200px,17vw)] lg:min-h-[176px]',
 } as const
 
 export function CategoryCard({
@@ -47,23 +43,26 @@ export function CategoryCard({
           alt={imageAlt}
           width={1200}
           height={800}
-          loading="lazy"
+          loading="eager"
           decoding="async"
           sizes="(min-width: 1024px) 33vw, 50vw"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.025] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           style={{ objectPosition }}
         />
       ) : null}
+      {/* Gradient only near text, not a heavy full-card wash */}
       <div
-        className="absolute inset-0 bg-linear-to-t from-navy/90 via-navy/25 to-transparent"
+        className="absolute inset-x-0 bottom-0 h-[58%] bg-linear-to-t from-navy/88 via-navy/35 to-transparent"
         aria-hidden
       />
       <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 lg:p-3.5">
-        <h3 className="font-heading text-[15px] leading-tight font-semibold text-white sm:text-[16px] lg:text-[18px]">
+        <h3 className="font-heading text-[14px] leading-tight font-semibold text-white min-[380px]:text-[15px] sm:text-[16px] lg:text-[17px]">
           {title}
         </h3>
         {cta ? (
-          <p className="mt-0.5 text-[12px] leading-snug text-white/80 sm:text-[13px]">{cta}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-white/75 min-[380px]:text-[12px] sm:text-[13px]">
+            {cta}
+          </p>
         ) : null}
       </div>
     </Link>

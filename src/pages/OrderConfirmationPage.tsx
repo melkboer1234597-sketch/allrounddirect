@@ -30,7 +30,7 @@ const COPY: Record<
 > = {
   CHECKING: {
     heading: 'Wij controleren uw betaling.',
-    detail: 'Even geduld — we vragen de actuele status op bij onze betaaldienst.',
+    detail: 'Even geduld. We vragen de actuele status op bij onze betaaldienst.',
   },
   PAID: {
     heading: 'Bedankt voor uw bestelling',
@@ -173,7 +173,7 @@ export function OrderConfirmationPage() {
         <div className="mx-auto max-w-[40rem]">
           {uiState === 'PAID' ? <SuccessIcon /> : null}
 
-          <h1 className="heading-display text-navy">{copy.heading}</h1>
+          <h1 className="heading-page text-navy">{copy.heading}</h1>
           <p className="text-body mt-3 text-ink">{copy.detail}</p>
 
           {error ? (

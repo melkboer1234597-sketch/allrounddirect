@@ -5,21 +5,23 @@ import { assets } from '@/lib/assets'
 
 export function BusinessSection() {
   return (
-    <section aria-labelledby="business-heading" className="section-space">
-      <Container>
-        <div className="grid items-center gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
-          <div className="order-2 min-w-0 lg:order-1 lg:py-2">
+    <section aria-labelledby="business-heading" className="border-t border-line">
+      <Container className="py-9 md:py-11 lg:py-12">
+        <div className="grid items-center gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
+          <div className="order-2 min-w-0 lg:order-1">
             <h2 id="business-heading" className="heading-section text-ink">
-              Ook voor horeca en zakelijke inkoop
+              Horeca en zakelijke inkoop
             </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted">
-              Van koelapparatuur en professionele keukenproducten tot meubels en projectinrichting.
-              Voor grotere aantallen maken we graag een passende zakelijke offerte.
+            <p className="mt-2.5 max-w-[42ch] text-[15px] leading-relaxed text-muted">
+              Koeling, keukenlijnen en inrichting voor ondernemers. Voor grotere aantallen maken we
+              een offerte.
             </p>
-            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
-              <Button to="/zakelijk/offerte">Zakelijke offerte</Button>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button to="/zakelijk/offerte" size="sm">
+                Zakelijke offerte
+              </Button>
               <Button to="/horeca" variant="text">
-                Bekijk horeca
+                Horeca
               </Button>
             </div>
           </div>
@@ -29,7 +31,8 @@ export function BusinessSection() {
               alt="Horeca- en zakelijk assortiment"
               width={1200}
               height={750}
-              className="aspect-[16/10] max-h-[280px] w-full object-[30%_center] md:max-h-[340px] lg:aspect-auto lg:h-[min(400px,40vw)] lg:max-h-[400px]"
+              loading="eager"
+              className="aspect-[16/10] h-auto max-h-[240px] w-full object-[30%_center] md:max-h-[300px] lg:max-h-[340px]"
             />
           </div>
         </div>
